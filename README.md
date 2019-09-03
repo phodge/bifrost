@@ -7,15 +7,49 @@ possible to native function calls.
 
 # Terminology
 
-* Master: The **master** process in a **master/slave** mode
-* Client: The **client** process in a **client/server** mode
+* **Master**/**Slave**: The master/client processes in a **master/slave** operation mode
+* **Client**/**Server**: The master/client processes in a **client/server** operation mode
+* **Host**: A [slave] or [server] that makes a [collection] available to [consumers].
+* **Consumer**: A [master] that spawns a [slave] process and makes RPC calls to the collection
+  provided by that [slave]; OR
+  a [client] that connects to a [server] and makes RPC calls to the collection provided by that
+  server.
+* **Collection** a class or function that defines a list of CCC that will be made available to
+  consumers.
+* **Consumer Library**: An auto-generated package of source code containing function and class
+  wrappers that make RPC calls to to a Server or Slave.
+
 * TODO:
   * AAA: a list of functions/classes/variables that are grouped together for 
   * BBB: an auto-generated library for Clients or Masters or to import and use as endpoints to use functions/classes/variables of an AAA
   * CCC: the various functions/classes/variables of an AAA
-* Bifrost Collection:
 * Consumer Library - an exported library for processes that want to connect to a Collection
 * TODO
+
+
+# Naming Conventions
+
+In this example you have a collection of functions that handle user authentication and you want to
+create a Server that hosts this collection on the network for other services to use.
+TODO: reword this
+
+## PHP
+
+The Collection would be a class named `MyProject\CoolThings\AuthServices`.
+
+The consumer library would typically be exported to:
+
+* PHP: namespace `MyProject\CoolThings\AuthServices\ConsumerAPI`.
+* Python: module `MyProject.CoolThings.AuthServices.ConsumerAPI`. Note that
+  `MyProject.CoolThings.AuthServices` would be [namespace packages](todo: link).
+* JavaScript: module `MyProject/CoolThings/AuthServices/ConsumerAPI.js`.
+  TODO: we'll need a mechanism to choose the exported module type ... :-/
+
+The Consumer Library would be exported to the corresponding namespace `My\Namespace\SomeCollection\ConsumerAPI`.
+
+When
+
+
 
 
 # Supported Data Types
