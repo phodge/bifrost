@@ -1,0 +1,12 @@
+[tool.poetry]
+name = "bifrost-rpc"
+version = "0.1.0"
+description = ""
+license = "MIT"
+authors = []
+packages = [
+    { include = "bifrostrpc" }
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
