@@ -11,3 +11,6 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.6"
 typing-extensions = {version = "^3.7.4", python = "<3.8"}
+
+[tool.poetry.dev-dependencies]
+mypy = "^0.770"
