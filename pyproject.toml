@@ -15,3 +15,6 @@ paradox-codegen = { git = "https://github.com/phodge/paradox.git", branch = "mas
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
+
+[build-system]
+requires = ["setuptools>=40.0", "wheel", "pytoml"]
