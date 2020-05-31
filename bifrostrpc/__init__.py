@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
-                    Optional, Tuple, Type, TypeVar)
+from typing import (TYPE_CHECKING, Any, Callable, ContextManager, Dict, List,
+                    Literal, Optional, Tuple, Type, TypeVar)
 
 from paradox.output import Script
 
@@ -16,6 +16,7 @@ Flavour = Literal['requests', 'abstract']
 log = logging.getLogger()
 
 T = TypeVar('T')
+F = TypeVar('F', bound=Callable[..., Any])
 
 
 class ArgumentError(Exception):
@@ -39,6 +40,67 @@ class TypeNotSupportedError(Exception):
 
 class AuthFailure(Exception):
     """Raised inside an Auth Type factory to send a specific message back to the client."""
+
+
+class Namespace:
+    def __init__(self) -> None:
+        self._service = BifrostRPCService([])
+
+    def method(self) -> Callable[[F], F]:
+        import wrapt
+
+        @wrapt.decorator
+        def wrapped(wrapped: F, instance: Any, args: Any, kwargs: Any) -> F:
+            return wrapped(*args, **kwargs)
+
+        def register_and_wrap(f: F) -> F:
+            self._service.add_method(wrapped)
+            return wrapped(f)
+
+        return register_and_wrap
+
+    def internal_type(
+        self,
+        t: Type[T],
+        *,
+        contextmanager: ContextManager[T] = None,
+    ) -> None:
+        self._service.addContextType(t)
+
+    def export_types(self, *types: Any) -> None:
+        import dataclasses
+        for t in types:
+            if dataclasses.is_dataclass(t):
+                self._service.addDataclass(t)
+            else:
+                self._service.addNewType(t)
+
+    def get_flask_app(self, name: str, import_name: str) -> "flask.Flask":
+        import flask
+
+        bp = self._service.get_flask_blueprint(name, import_name)
+        app = flask.Flask(name)
+        app.register_blueprint(bp)
+        return app
+
+    def generate_python_client(
+        self,
+        *,
+        modulepath: Path,
+        classname: str,
+        flavour: Flavour,
+    ) -> None:
+        self._service.generatePythonClient(modulepath, classname, flavour)
+
+    def generate_php_client(
+        self,
+        *,
+        namespace: str,
+        rootpath: Path,
+        classname: str,
+        flavour: Literal["abstract"],
+    ) -> None:
+        self._service.generatePHPClient(namespace, rootpath, classname, flavour)
 
 
 class BifrostRPCService:
@@ -66,6 +128,10 @@ class BifrostRPCService:
             raise Exception(f"A target named {name} already exists")
         self._targets[name] = fn
         return fn
+
+    def add_method(self, fn: Callable[..., Any]) -> None:
+        assert fn.__name__ not in self._targets
+        self._targets[fn.__name__] = fn
 
     def getThings(self, name: str) -> Tuple[Callable[..., Any], FuncSpec]:
         try:
