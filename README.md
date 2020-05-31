@@ -25,11 +25,10 @@ If you have a python service with some useful function such as this:
 
 Then you can turn it into a Bifrost RPC service like this:
 
-    app = BifrostRPC()
-    app.addType(Actor)
-    app.addType(Movie)
-    app.addMethod(get_movies)
-    app.addMethod(get_actors)
+    app = BifrostRPCService()
+    app.export_types(Actor, Movie)
+    app.method(get_movies)
+    app.method(get_actors)
     app.run(port=8000)
 
 And have this client code generated for you:
