@@ -1,6 +1,6 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
 from typing_extensions import Literal
 
@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 Flavour = Literal['requests', 'abstract']
 
 log = logging.getLogger()
+
+T = TypeVar('T')
 
 
 class ArgumentError(Exception):
@@ -27,6 +29,10 @@ class InvalidMethodError(Exception):
     pass
 
 
+class AuthFailure(Exception):
+    """Raised inside an Auth Type factory to send a specific message back to the client."""
+
+
 class BifrostRPCService:
     _targets: Dict[str, Callable[..., Any]]
 
@@ -34,6 +40,7 @@ class BifrostRPCService:
         self._targets = {fn.__name__: fn for fn in targets}
         self._adv: Advanced = Advanced()
         self._spec: Dict[str, FuncSpec] = {}
+        self._factory: Dict[Type[Any], Callable[[], Any]] = {}
 
         # TODO: when we're dealing with a NewType in typescript, we have the choice of using the
         # matching primitive type (string/int/bool) or generating a type alias in typescript
@@ -59,8 +66,23 @@ class BifrostRPCService:
     def addExternalType(self, newType: Type[Any], *, tsmodule: str = None) -> None:
         self._adv.addExternalType(newType, tsmodule=tsmodule)
 
-    def addContextType(self, newType: Type[Any]) -> None:
+    def addInternalType(
+        self,
+        newType: Type[T],
+        factory: Callable[[], T],
+    ) -> None:
+        assert newType not in self._factory
         self._adv.addContextType(newType)
+        self._factory[newType] = factory
+
+    def addAuthType(
+        self,
+        newType: Type[T],
+        factory: Callable[[], Optional[T]],
+    ) -> None:
+        assert newType not in self._factory
+        self._adv.addAuthType(newType)
+        self._factory[newType] = factory
 
     def addDataclass(self, class_: Type[Any]) -> None:
         self._adv.addDataclass(class_)
@@ -142,6 +164,36 @@ class BifrostRPCService:
                 kwargs = spec.importArgs(provided, 'body', errors)
                 if len(errors):
                     return make_response('.\n'.join(errors) + '.', 400)
+
+                authorized = False
+                for name, t in spec.authvars.items():
+                    factory = self._factory[t]
+                    try:
+                        value = factory()
+                    except AuthFailure as e:
+                        return make_response(e.args[0], 401)
+
+                    if not value:
+                        log.info(
+                            f"{method}(): Authorization error"
+                            f": factory for {name}: {t.__name__} returned a Falsy value."
+                        )
+                        return make_response('Authorization error', 401)
+
+                    kwargs[name] = value
+                    authorized = True
+
+                if not authorized:
+                    log.error(
+                        f"{method}(): Authorization error"
+                        f": No auth vars configured for this method."
+                    )
+                    return make_response('Authorization error', 401)
+
+                # set up context for the function call
+                for name, t in spec.contextvars.items():
+                    factory = self._factory[t]
+                    kwargs[name] = factory()
 
                 # now call the function
                 try:

@@ -22,6 +22,7 @@ class Advanced:
     childTypes: Dict[str, List[str]]
     dataclasses: List[Type[Any]]
     contextTypes: Set[Type[Any]]
+    authTypes: Set[Type[Any]]
     # {<newtype>: (<tsmodule>, )}
     externalTypes: Dict[Type[Any], Tuple[str, ]]
 
@@ -30,10 +31,14 @@ class Advanced:
         self.dataclasses = []
         self.childTypes = {}
         self.contextTypes = set()
+        self.authTypes = set()
         self.externalTypes = {}
 
     def addContextType(self, newType: Type[Any]) -> None:
         self.contextTypes.add(newType)
+
+    def addAuthType(self, newType: Type[Any]) -> None:
+        self.authTypes.add(newType)
 
     def addNewType(self, newType: Type[Any]) -> None:
         # it must be a NewType
@@ -79,6 +84,9 @@ class Advanced:
     def hasContextType(self, someType: Type[Any]) -> bool:
         return someType in self.contextTypes
 
+    def hasAuthType(self, someType: Type[Any]) -> bool:
+        return someType in self.authTypes
+
     def hasDataclass(self, class_: Any) -> bool:
         return class_ in self.dataclasses
 
@@ -100,11 +108,16 @@ class FuncSpec:
     argSpecs: Dict[str, 'TypeSpec']
     retvalSpec: 'TypeSpec'
     contextvars: Dict[str, Type[Any]]
+    authvars: Dict[str, Type[Any]]
 
     def __init__(self, fn: Callable[..., Any], adv: Advanced) -> None:
         self.contextvars = {}
+        self.authvars = {}
         self.argSpecs = {}
         for name, someType in get_type_hints(fn).items():
+            if adv.hasAuthType(someType):
+                self.authvars[name] = someType
+                continue
             if adv.hasContextType(someType):
                 self.contextvars[name] = someType
                 continue
