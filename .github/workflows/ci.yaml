@@ -7,9 +7,7 @@ jobs:
         container: python:3.8
         steps:
             - id: step1
-              run: echo DIE DIE DIE; exit 1
-            - id: step2
-              run: echo never reached
+              run: tests/bin/ensure_requirements_txt_exported
               #    test_python_36:
               #        name: "py.test under py3.6"
               #        container: python3.6

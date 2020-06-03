@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -e
+
+fail() { local z="$?"; echo -e "\e[01;31m[$(date +'%H:%M:%S%P')] FAIL[$z]: $@\e[0m" >&2; exit 5; }
+
+test -f requirements.txt || fail requirements.txt does not exist
+test -f requirements_dev.txt || fail requirements_dev.txt does not exist
