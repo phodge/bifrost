@@ -4,7 +4,6 @@ jobs:
     verify_requirements_exported:
         name: "Ensure requirements.txt has been exported"
         runs-on: ubuntu-latest
-        container: python:3.8
         steps:
             - uses: actions/checkout@v2
             - id: step1
