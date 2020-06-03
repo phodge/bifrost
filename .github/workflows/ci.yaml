@@ -1,0 +1,20 @@
+on: [push, pull_request]
+
+jobs:
+    verify_requirements_exported:
+        name: "Ensure requirements.txt has been exported"
+        container: python3.8
+        steps:
+            - id: step1
+              run: echo DIE DIE DIE; exit 1
+            - id: step2
+              run: echo never reached
+              #    test_python_36:
+              #        name: "py.test under py3.6"
+              #        container: python3.6
+              #    test_python_37:
+              #        name: "py.test under py3.7"
+              #        container: python3.7
+              #    test_python_38:
+              #        name: "py.test under py3.8"
+              #        container: python3.8
