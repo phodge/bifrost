@@ -7,7 +7,7 @@ jobs:
         steps:
             - uses: actions/checkout@v2
             - run: sudo apt install -y python3-pip
-            - run: pip install --user poetry
+            - run: pip3 install --user poetry
             - run: tests/bin/ensure_requirements_txt_exported
               #    test_python_36:
               #        name: "py.test under py3.6"
