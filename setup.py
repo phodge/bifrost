@@ -1,9 +1,7 @@
-from typing import Any, Dict, Optional
-
 from setuptools import setup
 
 
-def _read_pyproject() -> Dict[str, Any]:
+def _read_pyproject():
     from os.path import dirname, join
 
     import pytoml
@@ -17,7 +15,7 @@ def _read_pyproject() -> Dict[str, Any]:
         raise Exception("pyproject.toml is missing [tool.poetry] section")
 
 
-def _flatten_dependency(packagename: str, spec: Any) -> Optional[str]:
+def _flatten_dependency(packagename, spec):
     if packagename == 'python':
         return None
 
