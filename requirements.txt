@@ -1,0 +1,2 @@
+-e git+https://github.com/phodge/paradox.git@b34b79ea258cebb28de960229b0c6eb8eb8d7630#egg=paradox-codegen
+typing-extensions==3.7.4.2

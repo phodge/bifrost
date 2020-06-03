@@ -11,7 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.6"
 typing-extensions = {version = "^3.7.4", python = "<3.8"}
-paradox-codegen = { git = "https://github.com/phodge/paradox.git", branch = "master" }
+paradox-codegen = { git = "https://github.com/phodge/paradox.git", tag = "0.3.0" }
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
