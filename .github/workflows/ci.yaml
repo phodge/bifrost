@@ -6,8 +6,9 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
-            - id: step1
-              run: tests/bin/ensure_requirements_txt_exported
+            - run: apt install python3-pip
+            - run: pip install poetry
+            - run: tests/bin/ensure_requirements_txt_exported
               #    test_python_36:
               #        name: "py.test under py3.6"
               #        container: python3.6
