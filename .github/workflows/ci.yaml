@@ -3,6 +3,7 @@ on: [push, pull_request]
 jobs:
     verify_requirements_exported:
         name: "Ensure requirements.txt has been exported"
+        runs-on: linux-latest
         container: python3.8
         steps:
             - id: step1
