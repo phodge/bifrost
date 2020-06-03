@@ -6,6 +6,7 @@ jobs:
         runs-on: ubuntu-latest
         container: python:3.8
         steps:
+            - uses: actions/checkout@v2
             - id: step1
               run: tests/bin/ensure_requirements_txt_exported
               #    test_python_36:
