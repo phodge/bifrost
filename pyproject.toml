@@ -18,5 +18,15 @@ dataclasses = {version = "^0.7", python = "3.6"}
 mypy = "^0.770"
 pytest = "^5.4.3"
 
+[tool.tox]
+legaxy_tox_ini = """
+[tox]
+envlist = py36,py37,py38
+
+[testenv]
+deps = -rrequirements_dev.txt
+commands = pytest
+"""
+
 [build-system]
 requires = ["setuptools>=40.0", "wheel", "pytoml"]
