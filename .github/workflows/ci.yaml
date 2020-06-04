@@ -6,7 +6,10 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v2
-            - run: sudo apt install -y python3-pip
+            - name: Setup python
+              uses: actions/setup-python@v2
+              with:
+                python-version: 3.8
             - run: pip3 install --user poetry
             - run: tests/bin/ensure_requirements_txt_exported
               #    test_python_36:
