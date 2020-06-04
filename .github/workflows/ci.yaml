@@ -10,7 +10,7 @@ jobs:
               uses: actions/setup-python@v2
               with:
                 python-version: 3.8
-            - run: pip install --user poetry
+            - run: sudo pip install poetry
             - run: tests/bin/ensure_requirements_txt_exported
               #    test_python_36:
               #        name: "py.test under py3.6"
