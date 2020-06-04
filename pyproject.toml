@@ -19,7 +19,7 @@ mypy = "^0.770"
 pytest = "^5.4.3"
 
 [tool.tox]
-legaxy_tox_ini = """
+legacy_tox_ini = """
 [tox]
 envlist = py36,py37,py38
 

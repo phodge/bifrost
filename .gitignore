@@ -1,3 +1,4 @@
 .pytest_cache
 *.egg-info
 __pycahe__
+.tox
