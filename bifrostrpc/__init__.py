@@ -30,6 +30,13 @@ class InvalidMethodError(Exception):
     pass
 
 
+class TypeNotSupportedError(Exception):
+    """Raised when you try to add a method with a type which can't be supported.
+
+    E.g. there is no clear way to support "typing.Any" over network calls, so it's not supported.
+    """
+
+
 class AuthFailure(Exception):
     """Raised inside an Auth Type factory to send a specific message back to the client."""
 

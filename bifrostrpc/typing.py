@@ -183,6 +183,8 @@ class TypeSpec(abc.ABC):
 
 
 def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
+    from bifrostrpc import TypeNotSupportedError
+
     # resolve the type (in case it's a NewType) and also get its name
     realType, typeNames = _resolveNewType(someType, adv)
     typeName = typeNames[0]
@@ -247,7 +249,7 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
         valueSpec = getTypeSpec(valueType, adv)
         return DictTypeSpec(keySpec, valueSpec)
 
-    raise Exception(f'getTypeSpec(): typing.{typeName} is not supported')
+    raise TypeNotSupportedError(f'getTypeSpec(): typing.{typeName} is not supported')
 
 
 class NullTypeSpec(TypeSpec):
