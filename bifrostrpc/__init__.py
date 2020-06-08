@@ -1,11 +1,12 @@
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, TypeVar
+from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
+                    Type, TypeVar)
 
+from paradox.generate.files import FilePython, FileTS
 from typing_extensions import Literal
 
-from bifrostrpc.typing import Advanced, FuncSpec, Type
-from paradox.generate.files import FilePython, FileTS
+from bifrostrpc.typing import Advanced, FuncSpec
 
 if TYPE_CHECKING:
     import flask
