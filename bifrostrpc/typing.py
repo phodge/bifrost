@@ -1,4 +1,5 @@
 import abc
+import sys
 from typing import (Any, Callable, Dict, Iterable, List, NewType, Set, Tuple,
                     Type, Union, cast, get_type_hints)
 
@@ -280,6 +281,21 @@ def _getActualTypeName(value: Any) -> str:
 def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
     # if it's not a NewType, just return itself and its type name
     if not isinstance(someType, type(NewType)):
+        if sys.version_info < (3, 7, 0) and someType.__module__ == 'typing':
+            # python 3.6 (the earliest python we support) doesn't have the ._name attributes we
+            # require below.
+            if someType is Any:
+                return someType, ['Any']
+
+            # FIXME:
+            # This is a pretty dirty hack - because python3.6 didn't have the ._name attribute yet,
+            # we have to poke into the __doc__ to try and figure out what kind of type we're
+            # looking at. This is prone to breaking with even just a minor python version update,
+            # but thankfully we only need it for the 3.6 series, which is now in security-fix-only
+            # mode (as per PEP 494)
+            if someType.__doc__ and someType.__doc__.startswith('Union type;'):
+                # TODO: but does this work if you've wrapped it with a custom type?
+                return someType, ['Union']
         # TODO: accessing someType.__name__ like this doesn't work if someType is a
         # forward-declaration (a string containing the type name)
         try:
