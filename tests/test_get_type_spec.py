@@ -1,7 +1,7 @@
 from typing import NewType
 
 
-def test_get_int_type_spec():
+def test_get_int_type_spec() -> None:
     from bifrostrpc.typing import Advanced
     from bifrostrpc.typing import getTypeSpec
     from bifrostrpc.typing import ScalarTypeSpec
@@ -33,7 +33,7 @@ def test_get_int_type_spec():
     assert ts.typeName == 'MyInt2'
 
 
-def test_get_str_type_spec():
+def test_get_str_type_spec() -> None:
     from bifrostrpc.typing import Advanced
     from bifrostrpc.typing import getTypeSpec
     from bifrostrpc.typing import ScalarTypeSpec
