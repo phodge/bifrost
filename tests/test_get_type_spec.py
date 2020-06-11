@@ -2,6 +2,12 @@ from typing import Any, Callable, Dict, List, NewType, Optional, Type, Union
 
 from pytest import raises  # type: ignore
 
+try:
+    from typing import Literal  # type: ignore
+except ImportError:
+    # Literal wasn't part of stdlib until 3.8
+    from typing_extensions import Literal
+
 
 def test_get_int_type_spec() -> None:
     from bifrostrpc.typing import Advanced
@@ -313,3 +319,30 @@ def test_get_Union_type_spec() -> None:
         ListTester(ScalarTester(MyInt2, int, 'MyInt2')),
         DictTester(ScalarTester(MyStr2, str, 'MyStr2')),
     )
+
+
+def test_get_Literal_type_spec() -> None:
+    from bifrostrpc.typing import Advanced
+    from bifrostrpc.typing import getTypeSpec
+    from bifrostrpc.typing import LiteralTypeSpec
+
+    Five = NewType('Five', Literal[5])
+    Hello = NewType('Hello', Literal["hello"])
+    adv = Advanced()
+    adv.addNewType(Five)
+    adv.addNewType(Hello)
+
+    ts = getTypeSpec(Literal[5], adv)
+    assert isinstance(ts, LiteralTypeSpec)
+    assert ts.expected == 5
+    assert ts.expectedType is int
+
+    ts = getTypeSpec(Five, adv)
+    assert isinstance(ts, LiteralTypeSpec)
+    assert ts.expected == 5
+    assert ts.expectedType is int
+
+    ts = getTypeSpec(Hello, adv)
+    assert isinstance(ts, LiteralTypeSpec)
+    assert ts.expected == "hello"
+    assert ts.expectedType is str
