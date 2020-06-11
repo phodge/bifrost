@@ -68,6 +68,7 @@ def test_get_str_type_spec() -> None:
 
 
 def test_get_List_type_spec() -> None:
+    from bifrostrpc import TypeNotSupportedError
     from bifrostrpc.typing import Advanced
     from bifrostrpc.typing import ListTypeSpec
     from bifrostrpc.typing import ScalarTypeSpec
@@ -95,6 +96,22 @@ def test_get_List_type_spec() -> None:
     assert ts.itemSpec.itemSpec.scalarType is str
     assert ts.itemSpec.itemSpec.originalType is MyStr2
     assert ts.itemSpec.itemSpec.typeName == 'MyStr2'
+
+    UserID = NewType('UserID', int)
+    Users = NewType('Users', List[UserID])
+    adv = Advanced()
+    adv.addNewType(UserID)
+    adv.addNewType(Users)
+
+    # TODO: we don't yet support a NewType wrapping a List like this
+    with raises(TypeNotSupportedError):
+        ts = getTypeSpec(Users, adv)
+        assert isinstance(ts, ListTypeSpec)
+        assert isinstance(ts.itemSpec, ListTypeSpec)
+        assert isinstance(ts.itemSpec.itemSpec, ScalarTypeSpec)
+        assert ts.itemSpec.itemSpec.scalarType is UserID
+        assert ts.itemSpec.itemSpec.originalType is int
+        assert ts.itemSpec.itemSpec.typeName == 'UserID'
 
 
 def test_get_Dict_type_spec() -> None:
