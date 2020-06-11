@@ -1,4 +1,4 @@
-from typing import Dict, List, NewType
+from typing import Any, Callable, Dict, List, NewType, Optional, Type, Union
 
 from pytest import raises  # type: ignore
 
@@ -142,3 +142,155 @@ def test_get_Dict_type_spec() -> None:
 
     with raises(TypeNotSupportedError):
         getTypeSpec(Dict[MyStr2, str], adv)
+
+
+def is_null_spec(ts: Any) -> bool:
+    from bifrostrpc.typing import NullTypeSpec
+    return isinstance(ts, NullTypeSpec)
+
+
+def ScalarTester(
+    originalType: Type[Any],
+    scalarType: Union[Type[str], Type[int], Type[bool]],
+    typeName: str,
+) -> Callable[[Any], bool]:
+    """
+    Return a callable that tests whether a given TypeSpec is a ScalarTypeSpec
+    with the correct type patterns.
+    """
+    def _test(ts: Any) -> bool:
+        return (
+            isinstance(ts, ScalarTypeSpec)
+            and ts.originalType is originalType
+            and ts.scalarType is scalarType
+            and ts.typeName == typeName
+        )
+    return _test
+
+
+def ListTester(
+    item_test: Callable[[Any], bool],
+) -> Callable[[Any], bool]:
+    """
+    Return a callable that tests whether a given TypeSpec is a ListTypeSpec
+    with the expected itemSpec.
+    """
+    from bifrostrpc.typing import ListTypeSpec
+
+    def _test(ts: Any) -> bool:
+        return isinstance(ts, ListTypeSpec) and item_test(ts.itemSpec)
+
+    return _test
+
+
+def DictTester(
+    value_test: Callable[[Any], bool],
+) -> Callable[[Any], bool]:
+    """
+    Return a callable that tests whether a given TypeSpec is a DictTypeSpec
+    with the expected valueSpec.
+
+    It is assumed that keySpec must be a ScalarTypeSpec[str], since that is the
+    only type of Dict we support.
+    """
+    from bifrostrpc.typing import DictTypeSpec, ScalarTypeSpec
+
+    def _test(ts: Any) -> bool:
+        if not isinstance(ts, DictTypeSpec):
+            return False
+
+        assert isinstance(ts.keySpec, ScalarTypeSpec)
+        assert ts.keySpec.scalarType is str
+        assert ts.keySpec.originalType is str
+        assert ts.keySpec.typeName == 'str'
+
+        return value_test(ts.valueSpec)
+
+    return _test
+
+
+def _assert_union_variants(
+    ts: Any,
+    *expected: Callable[[Any], bool],
+) -> None:
+    from bifrostrpc.typing import UnionTypeSpec
+
+    assert isinstance(ts, UnionTypeSpec)
+
+    copy = list(expected)
+
+    for variant in ts.variants:
+        for idx, fn in enumerate(copy):
+            if fn(variant):
+                # we have matched this expected variant, remove it
+                copy.pop(idx)
+                break
+        else:
+            import pprint
+            print('copy = ' + pprint.pformat(copy))  # noqa TODO
+            raise Exception(
+                f"UnionTypeSpec variant {variant!r} was not expected"
+            )
+
+    if len(copy):
+        raise Exception(
+                f"UnionTypeSpec did not contain a variant matching {copy[0]!r}"
+        )
+
+
+def test_get_Union_type_spec() -> None:
+    from bifrostrpc.typing import Advanced
+    from bifrostrpc.typing import getTypeSpec
+
+    # test handling of a simple Union[str, int, None]
+    _assert_union_variants(
+        getTypeSpec(Union[str, int, None], Advanced()),
+        is_null_spec,
+        ScalarTester(str, str, 'str'),
+        ScalarTester(int, int, 'int'),
+    )
+
+    # test handling of Optional[]
+    _assert_union_variants(
+        getTypeSpec(Optional[str], Advanced()),
+        is_null_spec,
+        ScalarTester(str, str, 'str'),
+    )
+
+    # test handling of nested Unions - note that nested unions are collapsed
+    _assert_union_variants(
+        getTypeSpec(Union[str, Union[int, None]], Advanced()),
+        is_null_spec,
+        ScalarTester(str, str, 'str'),
+        ScalarTester(int, int, 'int'),
+    )
+
+    _assert_union_variants(
+        getTypeSpec(Union[str, Optional[int]], Advanced()),
+        is_null_spec,
+        ScalarTester(str, str, 'str'),
+        ScalarTester(int, int, 'int'),
+    )
+
+    # test Union containing more complex types: Union[List[], Dict[]]
+    _assert_union_variants(
+        getTypeSpec(Union[List[int], Dict[str, int]], Advanced()),
+        ListTester(ScalarTester(int, int, 'int')),
+        DictTester(ScalarTester(int, int, 'int')),
+    )
+
+    # test Union containing some NewTypes
+    MyInt = NewType('MyInt', int)
+    MyStr = NewType('MyStr', str)
+    MyInt2 = NewType('MyInt2', MyInt)
+    MyStr2 = NewType('MyStr2', MyStr)
+    adv = Advanced()
+    adv.addNewType(MyInt)
+    adv.addNewType(MyStr)
+    adv.addNewType(MyInt2)
+    adv.addNewType(MyStr2)
+    _assert_union_variants(
+        getTypeSpec(Union[List[MyInt2], Dict[str, MyStr2]], adv),
+        ListTester(ScalarTester(MyInt2, int, 'MyInt2')),
+        DictTester(ScalarTester(MyStr2, str, 'MyStr2')),
+    )
