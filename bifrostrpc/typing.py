@@ -9,6 +9,12 @@ from paradox.typing import (CrossBool, CrossDict, CrossList, CrossLiteral,
                             CrossNewType, CrossNull, CrossNum, CrossStr,
                             CrossType, CrossUnion)
 
+try:
+    from typing import Literal  # type: ignore
+except ImportError:
+    # typing.Literal wasn't added until python 3.8
+    from typing_extensions import Literal
+
 ErrorList = List[str]
 ScalarTypes = Union[Type[str], Type[int], Type[bool]]
 
@@ -209,15 +215,19 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
             fieldSpecs[f.name] = fieldExporter
         return DataclassTypeSpec(realType, fieldSpecs)
 
-    if realType.__module__ == 'typing_extensions':
-        import typing_extensions
-        if realType.__origin__ is typing_extensions.Literal:
-            assert len(realType.__args__) == 1
-            value = realType.__args__[0]
-            if type(value) not in (str, int, bool):
-                raise Exception('getTypeSpec(): Literal must contain a str, int or bool')
+    if isinstance(realType, type(Literal)):
+        if sys.version_info < (3, 7, 0):
+            args = realType.__values__
+        else:
+            args = realType.__args__
 
-            return LiteralTypeSpec(value)
+        assert len(args) == 1
+        value = args[0]
+        if type(value) not in (str, int, bool):
+            raise Exception('getTypeSpec(): Literal must contain a str, int or bool')
+
+        # TODO: refactor LiteralTypeSpec so that it supports multiple literals like you'd expect
+        return LiteralTypeSpec(value)
 
     if realType.__module__ != 'typing':
         raise Exception(f'getTypeSpec() will only work with types from typing module'
@@ -281,11 +291,14 @@ def _getActualTypeName(value: Any) -> str:
 def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
     # if it's not a NewType, just return itself and its type name
     if not isinstance(someType, type(NewType)):
-        if sys.version_info < (3, 7, 0) and someType.__module__ == 'typing':
+        if sys.version_info < (3, 7, 0):
             # python 3.6 (the earliest python we support) doesn't have the ._name attributes we
             # require below.
             if someType is Any:
                 return someType, ['Any']
+
+            if isinstance(someType, type(Literal)):
+                return someType, ['Literal']
 
             # FIXME:
             # This is a pretty dirty hack - because python3.6 didn't have the ._name attribute yet,
@@ -293,7 +306,11 @@ def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
             # looking at. This is prone to breaking with even just a minor python version update,
             # but thankfully we only need it for the 3.6 series, which is now in security-fix-only
             # mode (as per PEP 494)
-            if someType.__doc__ and someType.__doc__.startswith('Union type;'):
+            if (
+                someType.__module__ == 'typing'
+                and someType.__doc__
+                and someType.__doc__.startswith('Union type;')
+            ):
                 # TODO: but does this work if you've wrapped it with a custom type?
                 return someType, ['Union']
         # TODO: accessing someType.__name__ like this doesn't work if someType is a
