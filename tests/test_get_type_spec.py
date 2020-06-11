@@ -1,6 +1,7 @@
-def test_get_int_type_spec():
-    from typing import NewType
+from typing import NewType
 
+
+def test_get_int_type_spec():
     from bifrostrpc.typing import Advanced
     from bifrostrpc.typing import getTypeSpec
     from bifrostrpc.typing import ScalarTypeSpec
@@ -33,8 +34,6 @@ def test_get_int_type_spec():
 
 
 def test_get_str_type_spec():
-    from typing import NewType
-
     from bifrostrpc.typing import Advanced
     from bifrostrpc.typing import getTypeSpec
     from bifrostrpc.typing import ScalarTypeSpec
