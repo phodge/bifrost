@@ -245,8 +245,9 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
             # NOTE: we don't support non-string keys, but this isn't a big deal because our inputs
             # are always coming from JSON
             keyTypeName = keyType.__name__
-            raise Exception(f'getTypeSpec() only supports Dict[str, ...]'
-                            f'; got Dict[{keyTypeName}, ...] instead')
+            raise TypeNotSupportedError(
+                f'getTypeSpec() only supports Dict[str, ...]; got Dict[{keyTypeName}, ...] instead'
+            )
         valueSpec = getTypeSpec(valueType, adv)
         return DictTypeSpec(keySpec, valueSpec)
 
