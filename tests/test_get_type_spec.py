@@ -158,6 +158,8 @@ def ScalarTester(
     Return a callable that tests whether a given TypeSpec is a ScalarTypeSpec
     with the correct type patterns.
     """
+    from bifrostrpc.typing import ScalarTypeSpec
+
     def _test(ts: Any) -> bool:
         return (
             isinstance(ts, ScalarTypeSpec)
