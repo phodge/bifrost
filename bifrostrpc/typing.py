@@ -1,11 +1,12 @@
 import abc
+from typing import (Any, Callable, Dict, Iterable, List, NewType, Set, Tuple,
+                    Type, Union, cast, get_type_hints)
+
 import dataclasses
 from dataclasses import is_dataclass
-from typing import (Any, Callable, Dict, Iterable, List, NewType, Set, Tuple, Type, Union, cast,
-                    get_type_hints)
-
-from paradox.typing import (CrossBool, CrossDict, CrossList, CrossLiteral, CrossNewType, CrossNull,
-                            CrossNum, CrossStr, CrossType, CrossUnion)
+from paradox.typing import (CrossBool, CrossDict, CrossList, CrossLiteral,
+                            CrossNewType, CrossNull, CrossNum, CrossStr,
+                            CrossType, CrossUnion)
 
 ErrorList = List[str]
 ScalarTypes = Union[Type[str], Type[int], Type[bool]]
