@@ -218,7 +218,8 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
             fieldSpecs[f.name] = fieldExporter
         return DataclassTypeSpec(realType, fieldSpecs)
 
-    if isinstance(realType, type(Literal)):
+    # NOTE: this doesn't work under python 3.7 or python 3.8
+    if isinstance(realType, type(Literal)) or getattr(realType, '__origin__', None) is Literal:
         if sys.version_info < (3, 7, 0):
             args = realType.__values__
         else:
