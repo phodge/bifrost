@@ -197,6 +197,9 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
     realType, typeNames = _resolveNewType(someType, adv)
     typeName = typeNames[0]
 
+    if realType is Any:
+        raise TypeNotSupportedError("'typing.Any' is not a permitted type")
+
     # FIXME: not sure why we're getting E721 here
     if realType is type(None):  # noqa: E721
         return NullTypeSpec()
