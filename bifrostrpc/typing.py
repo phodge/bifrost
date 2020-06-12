@@ -317,6 +317,7 @@ def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
             ):
                 # TODO: but does this work if you've wrapped it with a custom type?
                 return someType, ['Union']
+
         # TODO: accessing someType.__name__ like this doesn't work if someType is a
         # forward-declaration (a string containing the type name)
         try:
