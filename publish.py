@@ -40,6 +40,8 @@ def main() -> None:
     sys.stderr.write("Updating version inside pyproject.toml ...\n")
     runhere(['git', 'add', 'pyproject.toml'], check=True)
     runhere(['git', 'commit', '-m', 'Updated version in pyproject.toml'], check=True)
+    sys.stderr.write(f"Tagging {tagname!r} ...\n")
+    runhere(['git', 'tag', tagname], check=True)
     sys.stderr.write("Pushing ...\n")
     runhere(['git', 'push'], check=True)
     sys.stderr.write(f"Pushing tag {tagname} ...\n")
