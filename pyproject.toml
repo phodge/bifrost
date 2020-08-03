@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bifrost-rpc"
-version = "0.3.1"
+version = "0.4.1"
 description = ""
 license = "MIT"
 authors = []
