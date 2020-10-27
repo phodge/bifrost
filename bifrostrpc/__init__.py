@@ -142,6 +142,24 @@ class BifrostRPCService:
             flavour=flavour,
         )
 
+    def generatePHPClient(
+        self,
+        namespace: str,
+        rootpath: Path,
+        classname: str,
+        flavour: Literal["abstract"],
+    ) -> None:
+        from bifrostrpc.generators.php import generateClient
+
+        generateClient(
+            rootpath,
+            namespace=namespace,
+            classname=classname,
+            funcspecs=[(k, self._getTypeSpec(k)) for k in self._targets],
+            adv=self._adv,
+            flavour=flavour,
+        )
+
     def get_flask_blueprint(self, name: str, import_name: str) -> "flask.Blueprint":
         from flask import Blueprint, Response
 
