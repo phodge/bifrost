@@ -1,14 +1,20 @@
+from typing import Iterator, Tuple
 from paradox.generate.statements import ClassSpec
 from paradox.interfaces import AcceptsStatements
 
 
 def appendFailureModeClasses(dest: AcceptsStatements, as_exception: bool) -> None:
     dest.remark('failure modes')
-    af = dest.also(ClassSpec(
+    for name, classspec in getFailureModeClasses(as_exception):
+        dest.also(classspec)
+
+
+def getFailureModeClasses(as_exception: bool) -> Iterator[Tuple[str, ClassSpec]]:
+    af = ClassSpec(
         'ApiFailure',
         docstring=['parent class of all failure modes'],
         tsexport=True,
-    ))
+    )
     if as_exception:
         af.setPHPParentClass('Exception')
         af.addPythonBaseClass('Exception')
@@ -18,7 +24,10 @@ def appendFailureModeClasses(dest: AcceptsStatements, as_exception: bool) -> Non
         af.setTypeScriptParentClass('__UNSUPPORTED__')
     else:
         af.addProperty('message', str, initarg=True)
-    c_ApiOutage = dest.also(ClassSpec(
+
+    yield 'ApiFailure', af
+
+    c_ApiOutage = ClassSpec(
         'ApiOutage',
         tsexport=True,
         docstring=[
@@ -26,12 +35,13 @@ def appendFailureModeClasses(dest: AcceptsStatements, as_exception: bool) -> Non
             'the method call succeeding. If a method fails with ApiOutage, you',
             'might possibly succeed on a retry.',
         ],
-    ))
+    )
     c_ApiOutage.addPythonBaseClass('ApiFailure')
     c_ApiOutage.setPHPParentClass('ApiFailure')
     c_ApiOutage.setTypeScriptParentClass('ApiFailure')
+    yield 'ApiOutage', c_ApiOutage
 
-    c_ApiBroken = dest.also(ClassSpec(
+    c_ApiBroken = ClassSpec(
         'ApiBroken',
         tsexport=True,
         docstring=[
@@ -39,19 +49,22 @@ def appendFailureModeClasses(dest: AcceptsStatements, as_exception: bool) -> Non
             'call from succeeding. It is unlikely you will get a successful',
             'result by retrying.',
         ]
-    ))
+    )
     c_ApiBroken.addPythonBaseClass('ApiFailure')
     c_ApiBroken.setPHPParentClass('ApiFailure')
     c_ApiBroken.setTypeScriptParentClass('ApiFailure')
 
-    c_ApiUnauthorized = dest.also(ClassSpec(
+    yield 'ApiBroken', c_ApiBroken
+
+    c_ApiUnauthorized = ClassSpec(
         'ApiUnauthorized',
         tsexport=True,
         docstring=[
             'returned (not thrown) by api methods when valid authorization is'
             ' not provided',
         ]
-    ))
+    )
     c_ApiUnauthorized.addPythonBaseClass('ApiFailure')
     c_ApiUnauthorized.setPHPParentClass('ApiFailure')
     c_ApiUnauthorized.setTypeScriptParentClass('ApiFailure')
+    yield 'ApiUnauthorized', c_ApiUnauthorized
