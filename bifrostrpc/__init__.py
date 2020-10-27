@@ -1,4 +1,5 @@
 import logging
+from contextlib import ExitStack
 from pathlib import Path
 from typing import (TYPE_CHECKING, Any, Callable, ContextManager, Dict, List,
                     Literal, Optional, Tuple, Type, TypeVar)
@@ -47,27 +48,30 @@ class Namespace:
         self._service = BifrostRPCService([])
 
     def method(self) -> Callable[[F], F]:
-        import wrapt
+        def _decorator(f: F) -> F:
+            self._service.add_method(f)
+            return f
 
-        @wrapt.decorator
-        def wrapped(wrapped: F, instance: Any, args: Any, kwargs: Any) -> F:
-            return wrapped(*args, **kwargs)
-
-        def register_and_wrap(f: F) -> F:
-            self._service.add_method(wrapped)
-            return wrapped(f)
-
-        return register_and_wrap
+        return _decorator
 
     def internal_type(
         self,
         t: Type[T],
+        factory: Callable[[], T] = None,
         *,
-        contextmanager: ContextManager[T] = None,
+        contextmanager: Callable[[], ContextManager[T]] = None,
     ) -> None:
-        self._service.addContextType(t)
+        self._service.addInternalType(t, factory=factory, contextmanager=contextmanager)
 
-    def export_types(self, *types: Any) -> None:
+    def auth_type(
+        self,
+        t: Type[T],
+        *,
+        factory: Callable[[], T],
+    ) -> None:
+        self._service.addAuthType(t, factory=factory)
+
+    def replicate_types(self, *types: Any) -> None:
         import dataclasses
         for t in types:
             if dataclasses.is_dataclass(t):
@@ -111,6 +115,7 @@ class BifrostRPCService:
         self._adv: Advanced = Advanced()
         self._spec: Dict[str, FuncSpec] = {}
         self._factory: Dict[Type[Any], Callable[[], Any]] = {}
+        self._cm: Dict[Type[Any], Callable[[], ContextManager[Any]]] = {}
 
         # TODO: when we're dealing with a NewType in typescript, we have the choice of using the
         # matching primitive type (string/int/bool) or generating a type alias in typescript
@@ -150,15 +155,26 @@ class BifrostRPCService:
     def addInternalType(
         self,
         newType: Type[T],
-        factory: Callable[[], T],
+        factory: Callable[[], T] = None,
+        *,
+        contextmanager: Callable[[], ContextManager[T]] = None,
     ) -> None:
         assert newType not in self._factory
+        assert newType not in self._cm
         self._adv.addContextType(newType)
-        self._factory[newType] = factory
+
+        if factory is not None:
+            assert not contextmanager
+            self._factory[newType] = factory
+        elif contextmanager is not None:
+            self._cm[newType] = contextmanager
+        else:
+            raise Exception('either factory or contextmanager must be provided')
 
     def addAuthType(
         self,
         newType: Type[T],
+        *,
         factory: Callable[[], Optional[T]],
     ) -> None:
         assert newType not in self._factory
@@ -324,29 +340,34 @@ class BifrostRPCService:
                     return make_response('Authorization error', 401)
 
                 # set up context for the function call
-                for name, t in spec.contextvars.items():
-                    factory = self._factory[t]
-                    kwargs[name] = factory()
+                with ExitStack() as stack:
+                    for name, t in spec.contextvars.items():
+                        try:
+                            factory = self._factory[t]
+                        except KeyError:
+                            kwargs[name] = stack.enter_context(self._cm[t]())
+                        else:
+                            kwargs[name] = factory()
 
-                # now call the function
-                try:
-                    result: Any = fn(**kwargs)
-                except ArgumentError as e:
-                    errors = [e.args[0]]
-                else:
-                    def handle_err(msg: str) -> None:
-                        # TODO: raise a more specific exception type here
-                        raise Exception(f"method response was invalid: {msg}")
+                    # now call the function
+                    try:
+                        result: Any = fn(**kwargs)
+                    except ArgumentError as e:
+                        errors = [e.args[0]]
+                    else:
+                        def handle_err(msg: str) -> None:
+                            # TODO: raise a more specific exception type here
+                            raise Exception(f"method response was invalid: {msg}")
 
-                    # sanity-check the return value and convert fancy types (dataclasses) to plain
-                    # dicts
-                    errors = []
-                    jsonSafe = spec.exportRetval(
-                        result,
-                        '<retval>',
-                        showdataclasses,
-                        onerr=handle_err,
-                    )
+                        # sanity-check the return value and convert fancy types (dataclasses) to plain
+                        # dicts
+                        errors = []
+                        jsonSafe = spec.exportRetval(
+                            result,
+                            '<retval>',
+                            showdataclasses,
+                            onerr=handle_err,
+                        )
 
                 if errors:
                     # TODO: in production mode we  need to log errors rather than sending them to
