@@ -105,7 +105,7 @@ def _generateWrappers(
             filterblock = _getFilterBlock('result', '$DATA', retspec, names)
             conv.also(filterblock)
         except _FilterNotPossible:
-            names.getSpecificName('converted', True)
+            names.getSpecificName('converted', True, CrossAny())
             conv.also(_getConverterBlock('result', 'converted', '$DATA', retspec, names, adv))
             conv.alsoReturn(PanVar('converted', None))
         else:

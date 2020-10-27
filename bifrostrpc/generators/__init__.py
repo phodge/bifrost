@@ -1,4 +1,8 @@
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
+
+if TYPE_CHECKING:
+    from paradox.expressions import PanVar
+    from paradox.typing import CrossType
 
 
 class Names:
@@ -9,9 +13,13 @@ class Names:
         self,
         name: str,
         assignable: bool,
-    ) -> None:
+        crosstype: "CrossType",
+    ) -> "PanVar":
+        from paradox.expressions import PanVar
+
         assert name not in self._names
         self._names[name] = assignable
+        return PanVar(name, crosstype)
 
     def getNewName(
         self,
