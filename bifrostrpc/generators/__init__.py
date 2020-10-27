@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING, Dict, Union
 
 if TYPE_CHECKING:
-    from paradox.expressions import PanVar
+    from paradox.expressions import PanIndexAccess, PanKeyAccess, PanVar
     from paradox.typing import CrossType
 
 
@@ -23,10 +23,17 @@ class Names:
 
     def getNewName(
         self,
-        origin: str,
+        origin: "Union[PanVar, PanIndexAccess, PanKeyAccess, str]",
         base: str,
         assignable: bool,
     ) -> str:
+        from paradox.expressions import PanVar
+
+        if isinstance(origin, PanVar):
+            origin = origin.rawname
+        else:
+            assert isinstance(origin, str)
+
         # if there is a dot in the name, grab everything after
         if '.' in origin:
             origin = origin.split('.')[-1]
