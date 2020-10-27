@@ -1,6 +1,6 @@
 from typing import Dict, Union
 
-from paradox.expressions import PanVar
+from paradox.expressions import PanIndexAccess, PanKeyAccess, PanVar
 from paradox.typing import CrossType
 
 # Prevent warnings about args named 'type'
@@ -35,10 +35,17 @@ class Names:
 
     def getNewName(
         self,
-        origin: str,
+        origin: Union[PanVar, PanIndexAccess, PanKeyAccess, str],
         base: str,
         assignable: bool,
     ) -> str:
+        if isinstance(origin, PanVar):
+            origin = origin.rawname
+        else:
+            # TODO: this will fail for instances of PanIndexAccess and
+            # PanKeyAccess as allowed by type signature
+            assert isinstance(origin, str)
+
         # if there is a dot in the name, grab everything after
         if '.' in origin:
             origin = origin.split('.')[-1]
