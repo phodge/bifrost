@@ -5,11 +5,20 @@ class Names:
     def __init__(self) -> None:
         self._names: Dict[str, bool] = {}
 
-    def getSpecificName(self, name: str, assignable: bool) -> None:
+    def getSpecificName(
+        self,
+        name: str,
+        assignable: bool,
+    ) -> None:
         assert name not in self._names
         self._names[name] = assignable
 
-    def getNewName(self, origin: str, base: str, assignable: bool) -> str:
+    def getNewName(
+        self,
+        origin: str,
+        base: str,
+        assignable: bool,
+    ) -> str:
         # if there is a dot in the name, grab everything after
         if '.' in origin:
             origin = origin.split('.')[-1]
