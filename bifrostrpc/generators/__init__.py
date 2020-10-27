@@ -33,7 +33,12 @@ class Names:
     ) -> PanVar:
         return PanVar(self.getNewName(origin, base, assignable), type)
 
-    def getNewName(self, origin: str, base: str, assignable: bool) -> str:
+    def getNewName(
+        self,
+        origin: str,
+        base: str,
+        assignable: bool,
+    ) -> str:
         # if there is a dot in the name, grab everything after
         if '.' in origin:
             origin = origin.split('.')[-1]
