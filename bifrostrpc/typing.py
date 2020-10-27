@@ -220,7 +220,7 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
         for f in dataclasses.fields(realType):
             fieldExporter = getTypeSpec(f.type, adv)
             fieldSpecs[f.name] = fieldExporter
-        return DataclassTypeSpec(realType, fieldSpecs)
+        return DataclassTypeSpec(realType, fieldSpecs, adv)
 
     # NOTE: this doesn't work under python 3.7 or python 3.8
     if isinstance(realType, type(Literal)) or getattr(realType, '__origin__', None) is Literal:
@@ -478,13 +478,18 @@ class DictTypeSpec(TypeSpec):
 class DataclassTypeSpec(TypeSpec):
     class_: Any
     fieldSpecs: Dict[str, TypeSpec]
+    _adv: Advanced
 
-    def __init__(self, class_: Any, fieldSpecs: Dict[str, TypeSpec]):
+    def __init__(self, class_: Any, fieldSpecs: Dict[str, TypeSpec], adv: Advanced) -> None:
         self.class_ = class_
         self.fieldSpecs = fieldSpecs
+        self._adv = adv
 
     def getCrossType(self) -> CrossType:
-        # TODO: verify that Advanced knows about the dataclass
+        if not self._adv.hasDataclass(self.class_):
+            raise Exception(
+                f'Cannot generate a cross type for unknown dataclass {self.class_.__name__}')
+
         return CrossNewType(self.class_.__name__)
 
     def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
