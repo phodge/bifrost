@@ -1,13 +1,14 @@
 from typing import Any, Callable, List, Optional, Tuple, Type
 
 import dataclasses
-from paradox.expressions import PanCall, PanExpr, PanVar, pan, pyexpr
+from paradox.expressions import (PanCall, PanExpr, PanVar, exacteq_, not_, pan,
+                                 pandict, pyexpr)
 from paradox.generate.files import FilePython
 from paradox.generate.statements import (ClassSpec, ConditionalBlock,
                                          DictBuilderStatement, FunctionSpec,
                                          Statement, Statements)
-from paradox.typing import (CrossAny, CrossCallable, CrossNewType, dictof,
-                            unionof)
+from paradox.typing import (CrossAny, CrossCallable, CrossNewType, CrossNum,
+                            CrossStr, dictof, lit, unionof)
 
 from bifrostrpc import Flavour
 from bifrostrpc.generators import Names
@@ -37,6 +38,10 @@ def generateClient(
     # we're always going to need typing module
     dest.contents.alsoImportPy("typing")
 
+    dest.contents.alsoImportPy('logging')
+
+    dest.contents.also(pyexpr('log = logging.getLogger(__name__)'))
+
     appendFailureModeClasses(dest)
 
     # make copies of all our dataclasses
@@ -63,35 +68,18 @@ def _generateWrappers(
         # TODO: we really should have a docstring for this
     )
 
-    # add an dispatch() function that is used for all methods
-    cls.alsoImportPy('typing')
-    dispatchfn = cls.createMethod(
-        '_dispatch',
-        unionof(CrossNewType('ApiFailure'), CrossAny()),
-        isabstract=flavour == 'abstract',
-    )
-
-    def addimport(module: str) -> None:
-        cls.alsoImportPy(module)
-
-    # the method that should be called
-    dispatchfn.addPositionalArg('method', str)
-    # a dict of params to pass to the method
-    dispatchfn.addPositionalArg('params', dictof(str, CrossAny()))
-    # converter will be called with the result of the method call.
-    # It may modify result before returning it. It may raise a TypeError
-    # if any part of result does not match the method's return type.
-    dispatchfn.addPositionalArg('converter', CrossCallable([CrossAny()], CrossAny()))
-
     if flavour == 'requests':
-        # TODO: finish this
-        dispatchfn.alsoRaise(
-            msg="TODO: perform the request using requests library"
-        )
+        cls.addProperty('host', CrossStr(), initarg=True)
+        cls.addProperty('port', CrossNum(), initarg=True, default=80)
+        cls.addProperty('scheme', lit('http', 'https'), initarg=True, default='https')
+
+        _addRequestsDispatchMethod(cls)
     else:
         assert flavour == 'abstract'
-        # TODO: abstract function should get '...' body automatically?
-        #dispatchfn.also('...')
+        _addDispatchMethod(cls, True)
+
+    #def addimport(module: str) -> None:
+        #cls.alsoImportPy(module)
 
     for name, funcspec in funcspecs:
         retspec = funcspec.getReturnSpec()
@@ -522,3 +510,78 @@ def _getConverterBlock(
     raise Exception(
         f"No code to generate a converter block for {var_or_prop} using {spec!r}"
     )
+
+
+def _addDispatchMethod(
+    cls: ClassSpec,
+    isabstract: bool,
+) -> Tuple[FunctionSpec, PanVar, PanVar, PanVar]:
+    cls.alsoImportPy('typing')
+    dispatchfn = cls.createMethod(
+        '_dispatch',
+        unionof(CrossNewType('ApiFailure'), CrossAny()),
+        isabstract=isabstract,
+    )
+
+    # the method that should be called
+    v_method = dispatchfn.addPositionalArg('method', str)
+    # a dict of params to pass to the method
+    v_params = dispatchfn.addPositionalArg('params', dictof(str, CrossAny()))
+    # converter will be called with the result of the method call.
+    # It may modify result before returning it. It may raise a TypeError
+    # if any part of result does not match the method's return type.
+    v_converter = dispatchfn.addPositionalArg('converter', CrossCallable([CrossAny()], CrossAny()))
+
+    return dispatchfn, v_method, v_params, v_converter
+
+
+def _addRequestsDispatchMethod(cls: ClassSpec) -> None:
+    dispatchfn, v_method, v_params, v_converter = _addDispatchMethod(cls, False)
+
+    # we don't want this to be a top-level import
+    dispatchfn.also(pyexpr('import requests'))
+
+    # because this is python, we can just use an f-string
+    expr_url = pyexpr("f'{self.scheme}://{self.host}:{self.port}/api.v1/call/{method}'")
+    v_url = dispatchfn.alsoDeclare('url', "no_type", expr_url)
+
+    headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+    v_headers = dispatchfn.alsoDeclare('headers', "no_type", pandict(headers))
+
+    v_result = dispatchfn.alsoDeclare('result', "no_type", PanCall(
+        'requests.post',
+        v_url,
+        json=v_params,
+        headers=v_headers,
+    ))
+
+    dispatchfn.blank()
+    with dispatchfn.withCond(not_(exacteq_(v_result.getprop('status_code', int), 200))) as cond:
+        cond.remark('TODO: return ApiBroken instead when appropriate')
+        cond.remark('TODO: be more descriptive about what the actual errors was')
+        cond.alsoReturn(PanCall(
+            'ApiOutage',
+            # TODO: put the actual service name in here
+            pyexpr("f'Got response {result.status_code} from service: {result.text}'"),
+        ))
+
+    dispatchfn.blank()
+    dispatchfn.remark('Read JSON blob or bomb out')
+    dispatchfn.also(pyexpr('log.debug(result.text)'))
+    with dispatchfn.withTryBlock() as try_:
+        v_data = try_.alsoDeclare('data', "no_type", pyexpr("result.json()"))
+        with try_.withCatchBlock('Exception', 'e') as catch_:
+            catch_.alsoReturn(PanCall(
+                "ApiBroken",
+                pyexpr("f'Response was not valid JSON: {e.args[0]}'"),
+            ))
+
+    dispatchfn.blank()
+    dispatchfn.remark('Convert the JSON data to correct types and return it')
+    with dispatchfn.withTryBlock() as try_:
+        try_.alsoReturn(PanCall('converter', v_data))
+        with try_.withCatchBlock('TypeError', 'e') as catch_:
+            catch_.alsoReturn(PanCall(
+                "ApiBroken",
+                pyexpr("f'Response data from {method} was invalid: {e.args[0]}'"),
+            ))
