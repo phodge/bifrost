@@ -167,8 +167,9 @@ class BifrostRPCService:
     def generatePHPClient(
         self,
         filepath: Path,
+        namespace: str,
         classname: str,
-        flavour: Literal['abstract'],
+        flavour: Literal["abstract"],
         on_error: Literal['return', 'raise'] = 'return',
     ) -> None:
         # pylint: disable=cyclic-import
@@ -178,12 +179,12 @@ class BifrostRPCService:
 
         generateClient(
             script,
+            namespace=namespace,
             classname=classname,
             funcspecs=[(k, self._getTypeSpec(k)) for k in self._targets],
             adv=self._adv,
             flavour=flavour,
             on_error=on_error,
-        )
 
         # TODO: turn pretty on when paradox adds support
         script.write_to_path(filepath, lang='php', pretty=False)
