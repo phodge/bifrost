@@ -186,7 +186,7 @@ def _generateClientClass(
                     lang='python',
                 ))
             except ConverterNotPossible:
-                v_converted = names.getSpecificName('converted', True)
+                v_converted = names.getSpecificName('converted', True, CrossAny())
                 conv.also(getConverterBlock(
                     v_result,
                     v_converted,

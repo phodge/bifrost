@@ -15,11 +15,11 @@ class Names:
         self,
         name: str,
         assignable: bool,
-        type: CrossType = None,
+        crosstype: CrossType,
     ) -> PanVar:
         assert name not in self._names
         self._names[name] = assignable
-        return PanVar(name, type)
+        return PanVar(name, crosstype)
 
     # TODO: replace all use of old getNewName() with getNewName2() then
     # back-replace name

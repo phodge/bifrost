@@ -534,7 +534,7 @@ def _getUnionConverterBlock(
 
     # the most complex Unions will require a 'checker' function - mostly so that we can
     v_checker_arg = names.getNewName2('', 'value', False)
-    checkername = names.getSpecificName('_checker_' + uuid.uuid4().hex[:10], False).rawname
+    checkername = names.getSpecificName('_checker_' + uuid.uuid4().hex[:10], False, CrossAny()).rawname
     innercheck = FunctionSpec(checkername, CrossAny())
     innercheck.addPositionalArg(v_checker_arg.rawname, CrossAny())
     innerstmt.alsoAssign(v_out, PanCall(checkername, var_or_prop))

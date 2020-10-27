@@ -106,7 +106,7 @@ def _generateWrappers(
                     lang='php',
                 ))
             except ConverterNotPossible:
-                v_converted = names.getSpecificName('converted', True)
+                v_converted = names.getSpecificName('converted', True, CrossAny())
                 conv.also(getConverterBlock(
                     v_result,
                     v_converted,
