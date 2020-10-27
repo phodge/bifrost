@@ -349,3 +349,11 @@ def test_get_Literal_type_spec() -> None:
     assert isinstance(ts, LiteralTypeSpec)
     assert ts.expected == "hello"
     assert ts.expectedType is str
+
+
+def zzztest_get_Complex_type_spec():
+    raise Exception("TODO: test it")  # noqa
+
+
+def zzztest_get_Dataclass_type_spec():
+    raise Exception("TODO: test it")  # noqa
