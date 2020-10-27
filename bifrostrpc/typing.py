@@ -182,6 +182,10 @@ class TypeSpec(abc.ABC):
     Holds a type definition for an argument or return value.
     """
     @abc.abstractmethod
+    def getCrossType(self) -> CrossType:
+        ...
+
+    @abc.abstractmethod
     def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
         ...
 
@@ -270,6 +274,9 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
 
 
 class NullTypeSpec(TypeSpec):
+    def getCrossType(self) -> CrossType:
+        return CrossNull()
+
     def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> None:
         if value is not None:
             actualTypeName = _getActualTypeName(value)
@@ -343,6 +350,9 @@ class ListTypeSpec(TypeSpec):
     def __init__(self, itemSpec: TypeSpec):
         self.itemSpec = itemSpec
 
+    def getCrossType(self) -> CrossType:
+        return CrossList(self.itemSpec.getCrossType())
+
     def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> List[Any]:
         if isinstance(value, (str, bytes)):
             typeName = type(value).__name__
@@ -378,6 +388,9 @@ class UnionTypeSpec(TypeSpec):
 
     def __init__(self, variants: List[TypeSpec]):
         self.variants = variants
+
+    def getCrossType(self) -> CrossType:
+        return CrossUnion([variantspec.getCrossType() for variantspec in self.variants])
 
     def _process(
         self,
@@ -429,6 +442,9 @@ class DictTypeSpec(TypeSpec):
         self.keySpec = keySpec
         self.valueSpec = valueSpec
 
+    def getCrossType(self) -> CrossType:
+        return CrossDict(self.keySpec.getCrossType(), self.valueSpec.getCrossType())
+
     def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> Any:
         if type(value) is not dict:
             actualTypeName = _getActualTypeName(value)
@@ -466,6 +482,10 @@ class DataclassTypeSpec(TypeSpec):
     def __init__(self, class_: Any, fieldSpecs: Dict[str, TypeSpec]):
         self.class_ = class_
         self.fieldSpecs = fieldSpecs
+
+    def getCrossType(self) -> CrossType:
+        # TODO: verify that Advanced knows about the dataclass
+        return CrossNewType(self.class_.__name__)
 
     def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
         if not isinstance(value, dict):
@@ -535,6 +555,17 @@ class ScalarTypeSpec(TypeSpec):
         self.typeName = typeName
         self.originalType = originalType
 
+    def getCrossType(self) -> CrossType:
+        if self.typeName == "str":
+            return CrossStr()
+        if self.typeName == "int":
+            return CrossNum()
+        if self.typeName == "bool":
+            return CrossBool()
+        # a NewType.
+        # XXX: do we need to specify what the base is?
+        return CrossNewType(self.typeName)
+
     def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> Any:
         # NOTE: for scalar values we don't actually transform (heaven forbid we should cast our
         # ints to strs automatically like PHP); we just warn on incorrect types
@@ -556,6 +587,10 @@ class LiteralTypeSpec(TypeSpec):
         self.expected = expected
         self.expectedType = type(expected)
 
+    def getCrossType(self) -> CrossType:
+        assert self.expectedType in (bool, int, str)
+        return CrossLiteral([self.expected])
+
     def getExported(
         self,
         value: Any,
@@ -576,47 +611,9 @@ class LiteralTypeSpec(TypeSpec):
         return self.getExported(value, label, False, errors)
 
 
+# TODO: get rid of this in favour of just calling spec.getCrossType()
 def _generateCrossType(
     spec: TypeSpec,
     adv: Advanced,
 ) -> CrossType:
-    if isinstance(spec, NullTypeSpec):
-        return CrossNull()
-
-    if isinstance(spec, ScalarTypeSpec):
-        if spec.typeName == "str":
-            return CrossStr()
-        if spec.typeName == "int":
-            return CrossNum()
-        if spec.typeName == "bool":
-            return CrossBool()
-        # a NewType.
-        # XXX: do we need to specify what the base is?
-        return CrossNewType(spec.typeName)
-
-    if isinstance(spec, ListTypeSpec):
-        return CrossList(_generateCrossType(spec.itemSpec, adv))
-
-    if isinstance(spec, DictTypeSpec):
-        keytype = _generateCrossType(spec.keySpec, adv)
-        valuetype = _generateCrossType(spec.valueSpec, adv)
-        return CrossDict(keytype, valuetype)
-
-    if isinstance(spec, DataclassTypeSpec):
-        if not adv.hasDataclass(spec.class_):
-            raise Exception(
-                f'Cannot generate a python type for unknown dataclass {spec.class_.__name__}')
-
-        return CrossNewType(spec.class_.__name__)
-
-    if isinstance(spec, UnionTypeSpec):
-        return CrossUnion([
-            _generateCrossType(variantspec, adv)
-            for variantspec in spec.variants
-        ])
-
-    if isinstance(spec, LiteralTypeSpec):
-        assert spec.expectedType in (bool, int, str)
-        return CrossLiteral([spec.expected])
-
-    raise Exception(f"TODO: generate a cross type for {spec!r}")
+    return spec.getCrossType()
