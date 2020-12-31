@@ -110,8 +110,8 @@ typing-extensions = {version = "^3.7.4", markers = "python_version < \"3.8\""}
 [package.source]
 type = "git"
 url = "https://github.com/phodge/paradox.git"
-reference = "0.4.4"
-resolved_reference = "defb9a5bb45abe1605c739a46ef2f96f8e9d99e6"
+reference = "0.5.0"
+resolved_reference = "e25f038dfe9025ddd0c38f7f184e1a17f155b140"
 
 [[package]]
 name = "pluggy"
@@ -205,7 +205,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "c4139c125a535c0b0b699b87a5a6119953985b219d64661bf8ec394eda8d2f00"
+content-hash = "bcdfbe8d937efda78d25b183b137454199d0fd43a2b6a18998b332eb53a3f91a"
 
 [metadata.files]
 atomicwrites = [
