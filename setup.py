@@ -25,7 +25,7 @@ def _flatten_dependency(packagename, spec):
         return None
 
     if packagename == 'paradox-codegen':
-        return 'paradox-codegen @ git+https://github.com/phodge/paradox.git@0.3.0#egg=paradox-codegen'  # noqa: E501
+        return 'paradox-codegen @ git+{}@{}#egg=paradox-codegen'.format(spec['git'], spec['tag'])  # noqa: E501
 
     # don't attempt to convert version specifiers
     return packagename
