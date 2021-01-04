@@ -97,7 +97,7 @@ pyparsing = ">=2.0.2"
 
 [[package]]
 name = "paradox-codegen"
-version = "0.5.5"
+version = "0.6.0"
 description = ""
 category = "main"
 optional = false
@@ -105,13 +105,14 @@ python-versions = "^3.6"
 develop = false
 
 [package.dependencies]
+dataclasses = {version = "^0.7", markers = "python_version < \"3.7\""}
 typing-extensions = {version = "^3.7.4", markers = "python_version < \"3.8\""}
 
 [package.source]
 type = "git"
 url = "https://github.com/phodge/paradox.git"
-reference = "0.5.5"
-resolved_reference = "90be94125bede597a41da96207d3c70c2b53f902"
+reference = "0.6.0"
+resolved_reference = "c76bbea817a9528471d8abe9f72aefc3e10a8a5c"
 
 [[package]]
 name = "pluggy"
@@ -205,7 +206,7 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-checkdocs (>=1.2.3)", "pytest-flake
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "b766d531cb5f78f79a9cdb2f3cad73f5fa719663121081906f380d3df8879e5d"
+content-hash = "452ee0eb2fb5e664718ebc9335fc50c1c863679351ccd33f27f50c8a83b62c28"
 
 [metadata.files]
 atomicwrites = [
