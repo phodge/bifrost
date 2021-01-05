@@ -91,7 +91,7 @@ def _generateWrappers(
     else:
         assert flavour == 'abstract'
         # TODO: abstract function should get '...' body automatically?
-        #dispatchfn.also('...')
+        # dispatchfn.also('...')
 
     for name, funcspec in funcspecs:
         retspec = funcspec.getReturnSpec()
@@ -366,7 +366,7 @@ def _getFilterBlock(
             nomatchexpr = _getTypeNoMatchExpr(var_or_prop, vspec)
             if nomatchexpr is None:
                 raise _FilterNotPossible(
-                    f"UnionTypeSpec contains non-simple values and needs a converter block"
+                    "UnionTypeSpec contains non-simple values and needs a converter block"
                 )
 
             simpleexprs.append(nomatchexpr)
