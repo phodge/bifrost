@@ -148,8 +148,9 @@ class BifrostRPCService:
         bp = Blueprint(name, import_name)
 
         def _call(method: str) -> Response:
-            from flask import make_response, request
             import json
+
+            from flask import make_response, request
 
             # FIXME: provide a reuseable way to attach authentication/security
             try:
