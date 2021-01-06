@@ -371,7 +371,7 @@ def _getFilterBlock(
 
             simpleexprs.append(nomatchexpr)
 
-        assert len(simpleexprs)
+        assert simpleexprs
 
         # if they were all simple, we can use a single negative-if to rule out some invalid types
         ret = Statements()
@@ -473,7 +473,7 @@ def _getConverterBlock(
         else:
             innerstmt = ret
 
-        if len(notsimple):
+        if notsimple:
             # make sure we can assign a new value to var_or_prop
             if var_or_prop != 'result' and not names.isAssignable(var_or_prop):
                 raise Exception(f"Overwriting {var_or_prop} won't work")

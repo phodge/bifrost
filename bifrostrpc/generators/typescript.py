@@ -69,7 +69,7 @@ def _generateAdvancedTypes(dest: FileTS, adv: Advanced) -> None:
                 f'; no known primitive type for {baseType.__name__}')
 
         typeExpr = tsprimitive + ' & {readonly brand?: unique symbol}'
-        if len(children):
+        if children:
             typeExpr = ' | '.join(children) + ' | (' + typeExpr + ')'
 
         dest.contents.blank()
