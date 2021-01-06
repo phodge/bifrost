@@ -241,12 +241,12 @@ def _generateType(spec: TypeSpec, adv: Advanced, addimport: Callable[[str], None
     if isinstance(spec, LiteralTypeSpec):
         if spec.expectedType is bool:
             raise Exception("TODO: test this code path")  # noqa
-            addimport('typing_extensions')
+            addimport('typing_extensions')  # pylint: disable=unreachable
             return f'typing_extensions.Literal[{spec.expected!r}]'
 
         if spec.expectedType is int:
             raise Exception("TODO: test this code path")  # noqa
-            addimport('typing_extensions')
+            addimport('typing_extensions')  # pylint: disable=unreachable
             return f'typing_extensions.Literal[{spec.expected}]'
 
         if spec.expectedType is not str:

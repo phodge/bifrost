@@ -144,11 +144,11 @@ def _generateType(spec: TypeSpec, adv: Advanced) -> str:
     if isinstance(spec, LiteralTypeSpec):
         if spec.expectedType is bool:
             raise Exception("TODO: test this code path")  # noqa
-            return 'true' if spec.expected else 'false'
+            return 'true' if spec.expected else 'false'  # pylint: disable=unreachable
 
         if spec.expectedType is int:
             raise Exception("TODO: test this code path")  # noqa
-            return str(spec.expected)
+            return str(spec.expected)  # pylint: disable=unreachable
 
         if spec.expectedType is not str:
             raise Exception(f"Unexpected literal type {spec.expectedType.__name__}")
