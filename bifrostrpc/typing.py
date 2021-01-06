@@ -436,10 +436,10 @@ class DictTypeSpec(TypeSpec):
             return value
 
         transformed: Dict[Any, Any] = {}
-        for key, value in value.items():
-            valuelabel = label + '[' + repr(key) + ']'
-            newKey = self.keySpec.getExported(key, label, showdc, errors)
-            newVal = self.valueSpec.getExported(value, valuelabel, showdc, errors)
+        for k, v in value.items():
+            valuelabel = label + '[' + repr(k) + ']'
+            newKey = self.keySpec.getExported(k, label, showdc, errors)
+            newVal = self.valueSpec.getExported(v, valuelabel, showdc, errors)
             transformed[newKey] = newVal
         return transformed
 
@@ -452,9 +452,9 @@ class DictTypeSpec(TypeSpec):
             return value
 
         transformed: Dict[Any, Any] = {}
-        for key, value in value.items():
-            newKey = self.keySpec.getImported(key, label, errors)
-            newVal = self.valueSpec.getImported(value, label + '[' + repr(key) + ']', errors)
+        for k, v in value.items():
+            newKey = self.keySpec.getImported(k, label, errors)
+            newVal = self.valueSpec.getImported(v, label + '[' + repr(k) + ']', errors)
             transformed[newKey] = newVal
         return transformed
 
