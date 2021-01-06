@@ -300,20 +300,21 @@ def _generateConverter(
         # use a nested function for flow-control ... mostly so we can use 'return' statements
         # to break out of the function early if we find a matching type
         ts.rawline(f'{indent}  (function() {{')
+
+        # add a try/except for each vspec
+        # TODO: this fix will need some more serious testing
         for vspec in notsimple:
-            # add a try/except for each vspec
-            for vspec in notsimple:
-                ename = names.getNewName(var_or_prop, 'error', False)
-                ts.rawline(f'{indent}    try {{')
-                _generateConverter(ts, var_or_prop, vspec, names, adv, indent + '      ')
-                ts.rawline(f'{indent}      return; // {var_or_prop} matches this variant')
-                ts.rawline(f'{indent}    }} catch ({ename}) {{')
-                ts.rawline(f'{indent}      if ({ename} instanceof TypeError) {{')
-                ts.rawline(f'{indent}        // ignore type-error - continue on to next variant')
-                ts.rawline(f'{indent}      }} else {{')
-                ts.rawline(f'{indent}        throw {ename}; // re-throw any real errors')
-                ts.rawline(f'{indent}      }}')
-                ts.rawline(f'{indent}    }}')  # end try/catch
+            ename = names.getNewName(var_or_prop, 'error', False)
+            ts.rawline(f'{indent}    try {{')
+            _generateConverter(ts, var_or_prop, vspec, names, adv, indent + '      ')
+            ts.rawline(f'{indent}      return; // {var_or_prop} matches this variant')
+            ts.rawline(f'{indent}    }} catch ({ename}) {{')
+            ts.rawline(f'{indent}      if ({ename} instanceof TypeError) {{')
+            ts.rawline(f'{indent}        // ignore type-error - continue on to next variant')
+            ts.rawline(f'{indent}      }} else {{')
+            ts.rawline(f'{indent}        throw {ename}; // re-throw any real errors')
+            ts.rawline(f'{indent}      }}')
+            ts.rawline(f'{indent}    }}')  # end try/catch
         ts.rawline(f'{indent}    throw new TypeError("{var_or_prop} did not match any variant");')
         ts.rawline(f'{indent}  }})();')
         ts.rawline(f'{indent}}}')
