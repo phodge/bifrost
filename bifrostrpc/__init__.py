@@ -6,7 +6,8 @@ from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
 from paradox.generate.files import FilePython, FileTS
 from typing_extensions import Literal
 
-from bifrostrpc.typing import Advanced, FuncSpec
+from bifrostrpc.typing import Advanced  # pylint: disable=cyclic-import
+from bifrostrpc.typing import FuncSpec
 
 if TYPE_CHECKING:
     import flask
@@ -117,6 +118,7 @@ class BifrostRPCService:
         *,
         npmroot: Path,
     ) -> None:
+        # pylint: disable=cyclic-import
         from bifrostrpc.generators.typescript import generateClient
 
         generateClient(
@@ -132,6 +134,7 @@ class BifrostRPCService:
         classname: str,
         flavour: Flavour,
     ) -> None:
+        # pylint: disable=cyclic-import
         from bifrostrpc.generators.python import generateClient
 
         generateClient(
