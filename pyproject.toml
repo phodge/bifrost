@@ -17,6 +17,10 @@ dataclasses = {version = "^0.7", python = "<3.7"}
 [tool.poetry.dev-dependencies]
 mypy = "^0.770"
 pytest = "^5.4.3"
+pylint = "^2.6.0"
+# these are required for pylint to run
+pytoml = "^0.1.21"
+Flask = "^1.1.2"
 
 [tool.tox]
 legacy_tox_ini = """

@@ -1,0 +1,30 @@
+[MESSAGE CONTROL]
+disable = fixme,
+	  # don't complain about missing docstrings
+	  missing-module-docstring,
+	  missing-class-docstring,
+	  missing-function-docstring,
+	  # this seems to produce false positives, e.g.
+	  #   except KeyError:
+	  #       raise Exception("What actually went wrong")
+	  raise-missing-from,
+	  # these are just opinionated noise
+	  too-many-return-statements,
+	  too-many-locals,
+	  too-many-branches,
+	  too-many-statements,
+	  too-many-arguments,
+	  duplicate-code,
+	  # flake8 does these for us
+	  line-too-long,
+	  f-string-without-interpolation,
+ 	  # I'm fine with non-toplevel imports
+	  import-outside-toplevel,
+	  # leave import sorting to isort/black
+	  ungrouped-imports,
+	  wrong-import-order,
+	  # TODO: turn these back on some time
+	  invalid-name,
+	  logging-fstring-interpolation,
+
+good-names: f, fn, T
