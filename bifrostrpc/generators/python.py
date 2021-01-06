@@ -71,9 +71,6 @@ def _generateWrappers(
         isabstract=flavour == 'abstract',
     )
 
-    def addimport(module: str) -> None:
-        cls.alsoImportPy(module)
-
     # the method that should be called
     dispatchfn.addPositionalArg('method', str)
     # a dict of params to pass to the method
