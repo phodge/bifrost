@@ -81,7 +81,7 @@ class Advanced:
 
     def hasNewType(self, someType: Any) -> bool:
         try:
-            name = someType._name
+            name = someType._name  # pylint: disable=protected-access
         except AttributeError:
             name = someType.__name__
         return name in self.newTypes
@@ -321,13 +321,13 @@ def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
         # TODO: accessing someType.__name__ like this doesn't work if someType is a
         # forward-declaration (a string containing the type name)
         try:
-            n = someType._name
+            n = someType._name  # pylint: disable=protected-access
         except AttributeError:
             n = someType.__name__
         else:
             if n is None:
                 # get origin type
-                n = someType.__origin__._name
+                n = someType.__origin__._name  # pylint: disable=protected-access
         return someType, [n]
 
     # if the NewType isn't part of our Advanced list, then we're not allowed to resolve it
@@ -362,7 +362,7 @@ class ListTypeSpec(TypeSpec):
         return ret
 
     def getImported(self, value: Any, label: str, errors: ErrorList) -> List[Any]:
-        if type(value) is not list:
+        if type(value) is not list:  # pylint: disable=unidiomatic-typecheck
             actualTypeName = _getActualTypeName(value)
             errors.append(f'{label} must be a list; got {actualTypeName} instead')
             return value
@@ -430,7 +430,7 @@ class DictTypeSpec(TypeSpec):
         self.valueSpec = valueSpec
 
     def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> Any:
-        if type(value) is not dict:
+        if type(value) is not dict:  # pylint: disable=unidiomatic-typecheck
             actualTypeName = _getActualTypeName(value)
             errors.append(f'{label} must be a dict; got {actualTypeName} instead')
             return value
@@ -444,7 +444,7 @@ class DictTypeSpec(TypeSpec):
         return transformed
 
     def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
-        if type(value) is not dict:
+        if type(value) is not dict:  # pylint: disable=unidiomatic-typecheck
             # NOTE: we don't support importing dataclasses here because we're
             # not trying to convert sophisticated python types into primitive types
             actualTypeName = _getActualTypeName(value)

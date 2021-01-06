@@ -231,7 +231,7 @@ class BifrostRPCService:
                 return response
             except InvalidMethodError:
                 return make_response(f'invalid method name {method!r}', 501)
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-except
                 # FIXME: in production mode we  need to log errors rather than sending them to the
                 # client
                 log.exception(f'BifrostRPC {name!r}: Exception encountered')
