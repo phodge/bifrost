@@ -50,10 +50,6 @@ setup(
     name=poetry['name'],
     version=poetry['version'],
     description=poetry['description'],
-    packages=[
-        entry['include']
-        for entry in poetry['packages']
-    ],
     packages=list(_get_packages_recursive(poetry)),
     package_data={'bifrostrpc': ['py.typed', '**/py.typed']},
     install_requires=list(filter(None, [
