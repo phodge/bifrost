@@ -155,10 +155,10 @@ def test_get_Dict_type_spec() -> None:
     assert isinstance(ts.valueSpec.valueSpec, ScalarTypeSpec)
     assert ts.keySpec.scalarType is str
     assert ts.keySpec.originalType is str
-    assert ts.keySpec.typeName is 'str'
+    assert ts.keySpec.typeName == 'str'
     assert ts.valueSpec.keySpec.scalarType is str
     assert ts.valueSpec.keySpec.originalType is str
-    assert ts.valueSpec.keySpec.typeName is 'str'
+    assert ts.valueSpec.keySpec.typeName == 'str'
     assert ts.valueSpec.valueSpec.scalarType is str
     assert ts.valueSpec.valueSpec.originalType is MyStr2
     assert ts.valueSpec.valueSpec.typeName == 'MyStr2'
