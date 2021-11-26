@@ -326,8 +326,10 @@ def test_get_Literal_type_spec() -> None:
     from bifrostrpc.typing import getTypeSpec
     from bifrostrpc.typing import LiteralTypeSpec
 
-    Five = NewType('Five', Literal[5])
-    Hello = NewType('Hello', Literal["hello"])
+    # need type: ignore here because mypy can't work out what Literal is due to
+    # import fallback mechanism above
+    Five = NewType('Five', Literal[5])  # type: ignore
+    Hello = NewType('Hello', Literal["hello"])  # type: ignore
     adv = Advanced()
     adv.addNewType(Five)
     adv.addNewType(Hello)
