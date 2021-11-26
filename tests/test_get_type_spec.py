@@ -1,6 +1,6 @@
 from typing import Any, Callable, Dict, List, NewType, Optional, Type, Union
 
-from pytest import raises  # type: ignore
+from pytest import raises
 
 try:
     from typing import Literal  # type: ignore

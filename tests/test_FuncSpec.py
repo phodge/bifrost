@@ -1,4 +1,4 @@
-from pytest import raises  # type: ignore
+from pytest import raises
 
 
 def test_FuncSpec_typing_Any():
