@@ -20,8 +20,6 @@ def test_FuncSpec_typing_Any():
 
 
 def test_FuncSpec_scalar():
-    from typing import Union
-
     from bifrostrpc.typing import Advanced, FuncSpec, ScalarTypeSpec
 
     def scalar_fn(i: int, s: str, b: bool) -> None:
@@ -37,7 +35,6 @@ def test_FuncSpec_scalar():
 def test_FuncSpec_typing_List():
     from typing import List
 
-    from bifrostrpc import TypeNotSupportedError
     from bifrostrpc.typing import Advanced, FuncSpec
 
     def accept_list(things: List[int]) -> None: return None
