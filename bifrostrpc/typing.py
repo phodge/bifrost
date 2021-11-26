@@ -494,6 +494,8 @@ class DataclassTypeSpec(TypeSpec):
         except TypeError as e:
             errors.append(f'{label} error constructing {self.class_.__name__}: {e}')
 
+        return None
+
     def getExported(
         self,
         value: Any,
