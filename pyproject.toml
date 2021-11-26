@@ -17,7 +17,7 @@ dataclasses = {version = "^0.7", python = "<3.7"}
 [tool.poetry.dev-dependencies]
 mypy = "^0.901"
 flake8 = "^3.8.4"
-pytest = "^5.4.3"
+pytest = "^6.0.0"
 pylint = "^2.6.0"
 # these are required for pylint to run
 pytoml = "^0.1.21"
