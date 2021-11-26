@@ -44,16 +44,16 @@ def _flatten_dependency(packagename, spec):
     return packagename
 
 
-poetry = _read_pyproject()
+POETRY = _read_pyproject()
 
 setup(
-    name=poetry['name'],
-    version=poetry['version'],
-    description=poetry['description'],
-    packages=list(_get_packages_recursive(poetry)),
+    name=POETRY['name'],
+    version=POETRY['version'],
+    description=POETRY['description'],
+    packages=list(_get_packages_recursive(POETRY)),
     package_data={'bifrostrpc': ['py.typed', '**/py.typed']},
     install_requires=list(filter(None, [
         _flatten_dependency(packagename, spec)
-        for packagename, spec in poetry['dependencies'].items()
+        for packagename, spec in POETRY['dependencies'].items()
     ]))
 )
