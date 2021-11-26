@@ -2,9 +2,10 @@ from pytest import raises  # type: ignore
 
 
 def test_FuncSpec_typing_Any():
-    from bifrostrpc.typing import Advanced, FuncSpec
-    from bifrostrpc import TypeNotSupportedError
     from typing import Any
+
+    from bifrostrpc import TypeNotSupportedError
+    from bifrostrpc.typing import Advanced, FuncSpec
 
     def return_any() -> Any: return None
     def accept_any(a: Any) -> None: return None
@@ -19,8 +20,9 @@ def test_FuncSpec_typing_Any():
 
 
 def test_FuncSpec_scalar():
-    from bifrostrpc.typing import Advanced, FuncSpec, ScalarTypeSpec
     from typing import Union
+
+    from bifrostrpc.typing import Advanced, FuncSpec, ScalarTypeSpec
 
     def scalar_fn(i: int, s: str, b: bool) -> None:
         return None
@@ -33,9 +35,10 @@ def test_FuncSpec_scalar():
 
 
 def test_FuncSpec_typing_List():
-    from bifrostrpc.typing import Advanced, FuncSpec
-    from bifrostrpc import TypeNotSupportedError
     from typing import List
+
+    from bifrostrpc import TypeNotSupportedError
+    from bifrostrpc.typing import Advanced, FuncSpec
 
     def accept_list(things: List[int]) -> None: return None
     def return_list() -> List[int]: return []
