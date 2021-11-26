@@ -14,4 +14,4 @@ RUN pip install .
 
 COPY tests ./tests
 
-RUN py.test tests/
+RUN pytest tests/
