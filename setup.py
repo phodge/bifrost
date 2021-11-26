@@ -7,11 +7,11 @@ def _read_pyproject():
     import pytoml
 
     try:
-        with open(join(dirname(__file__), 'pyproject.toml')) as f:
+        with open(join(dirname(__file__), 'pyproject.toml'), encoding='utf-8') as f:
             pyproject = pytoml.load(f)
     except FileNotFoundError:
         # it looks like setuptools renames the file while it's working ... what a dirty hack job
-        with open(join(dirname(__file__), 'pyproject.tmp')) as f:
+        with open(join(dirname(__file__), 'pyproject.tmp'), encoding='utf-8') as f:
             pyproject = pytoml.load(f)
 
     try:
@@ -25,7 +25,7 @@ def _flatten_dependency(packagename, spec):
         return None
 
     if packagename == 'paradox-codegen':
-        return 'paradox-codegen @ git+{}@{}#egg=paradox-codegen'.format(spec['git'], spec['tag'])  # noqa: E501
+        return f"paradox-codegen @ git+{spec['git']}@{spec['tag']}#egg=paradox-codegen"
 
     # don't attempt to convert version specifiers
     return packagename
