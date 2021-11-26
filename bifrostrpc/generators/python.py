@@ -163,6 +163,9 @@ def _getDataclassSpec(
 
     # constructor part 2 - ensure the __dataclass__ item is present
     with fromdict.withCond(pyexpr(f'data.get("__dataclass__") != {name!r}')) as cond:
+        # Tell pylint not to sorry about the use of %-string formatting here -
+        # using an f-string to generate an f-string is too error prone:
+        # pylint: disable=C0209
         cond.alsoRaise("TypeError",
                        expr=pyexpr('f"{label}[\'__dataclass__\'] must be %s"' % repr(name)))
 
@@ -180,6 +183,10 @@ def _getDataclassSpec(
         with fromdict.withTryBlock() as tryblock:
             tryblock.alsoDeclare(v_var, None, pyexpr(f'data[{fname!r}]'))
             with tryblock.withCatchBlock('KeyError') as caught:
+                # Tell pylint not to sorry about the use of %-string formatting
+                # here - using an f-string to generate an f-string is too error
+                # prone:
+                # pylint: disable=C0209
                 caught.alsoRaise("TypeError",
                                  expr=pyexpr('f"{label}[\'%s\'] is missing"' % fname))
         fieldspec = getTypeSpec(field.type, adv)
