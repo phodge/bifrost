@@ -32,7 +32,14 @@ jobs:
       runs-on: ubuntu-latest
       strategy:
         matrix:
-            python-version: [3.6, 3.7, 3.8, 3.9, "3.10"]
+            python-version:
+                - 3.6
+                - 3.7
+                - 3.8
+                - 3.9
+                # XXX: this project doesn't work under 3.10 and above, presumably because python
+                # types are no longer resolved at runtime
+                # - "3.10"
       steps:
         - uses: actions/checkout@v2
         - name: Setup python
