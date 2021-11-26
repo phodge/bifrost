@@ -66,3 +66,11 @@ And have this client code generated for you:
         public get_actors(int $movie_id) {
             /* ... */
         }
+
+
+# Development
+
+To run unit tests using docker:
+
+    # run tests using python3.9
+    $ docker build --build-arg SOURCE_IMAGE=python:3.9 -f tests/Dockerfile .
