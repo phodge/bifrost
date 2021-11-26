@@ -20,6 +20,19 @@ def _read_pyproject():
         raise Exception("pyproject.toml is missing [tool.poetry] section")
 
 
+def _get_packages_recursive(poetry):
+    from glob import glob
+    from os.path import dirname
+
+    for entry in poetry['packages']:
+        subdir = entry['include']
+        yield subdir
+
+        # look for subdirectories
+        for initpy in glob(subdir + '/**/__init__.py'):
+            yield dirname(initpy)
+
+
 def _flatten_dependency(packagename, spec):
     if packagename == 'python':
         return None
@@ -41,6 +54,8 @@ setup(
         entry['include']
         for entry in poetry['packages']
     ],
+    packages=list(_get_packages_recursive(poetry)),
+    package_data={'bifrostrpc': ['py.typed', '**/py.typed']},
     install_requires=list(filter(None, [
         _flatten_dependency(packagename, spec)
         for packagename, spec in poetry['dependencies'].items()
