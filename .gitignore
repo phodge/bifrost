@@ -4,3 +4,6 @@
 *.egg-info
 __pycahe__
 .tox
+
+# my personal virtualenv dirs are called ".venv39" etc
+.venv3*
