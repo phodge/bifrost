@@ -321,6 +321,24 @@ def test_get_Union_type_spec() -> None:
     )
 
 
+def test_Union_type_spec_does_not_collapse_int_bool() -> None:
+    """Some versions of python express this bug.
+
+    'Union[int, bool]' becomes just 'int'
+
+    See https://stackoverflow.com/questions/60154326/unable-to-create-unionbool-int-type
+    """
+    from bifrostrpc.typing import Advanced
+    from bifrostrpc.typing import getTypeSpec
+
+    # test handling of a simple Union[int, bool]
+    _assert_union_variants(
+        getTypeSpec(Union[int, bool], Advanced()),
+        ScalarTester(int, int, 'int'),
+        ScalarTester(bool, bool, 'bool'),
+    )
+
+
 def test_get_Literal_type_spec() -> None:
     from bifrostrpc.typing import Advanced
     from bifrostrpc.typing import getTypeSpec
