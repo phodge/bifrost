@@ -36,7 +36,7 @@ jobs:
                 - 3.7
                 - 3.8
                 - 3.9
-                # XXX: this project doesn't work under 3.10 and above, presumably because python
+                # XXX: this project doesn't work on 3.10 and above, presumably because python
                 # types are no longer resolved at runtime
                 # - "3.10"
       steps:
