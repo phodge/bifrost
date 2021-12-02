@@ -246,6 +246,10 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
         raise Exception(f'getTypeSpec() will only work with types from typing module'
                         f'; type {realType!r} is not supported')
 
+    if typeName == 'Optional':
+        subType = realType.__args__[0]
+        return UnionTypeSpec([getTypeSpec(subType, adv), NullTypeSpec()])
+
     if typeName == 'List':
         assert len(realType.__args__) == 1
         itemType = realType.__args__[0]
