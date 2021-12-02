@@ -77,7 +77,7 @@ class Advanced:
                     f'Cannot add NewType({name!r}): parent type {parentName!r} is unknown')
             self.childTypes.setdefault(parentName, []).append(name)
 
-    def addExternalType(self, newType: Type[Any], *, tsmodule: str = None) -> None:
+    def addExternalType(self, newType: Type[Any], *, tsmodule: str) -> None:
         # it must be a NewType
         if not _isnewtype(newType):
             raise Exception(f'Not a NewType: {newType!r}')

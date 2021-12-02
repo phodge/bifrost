@@ -72,7 +72,7 @@ class BifrostRPCService:
     def addNewType(self, newType: Type[Any]) -> None:
         self._adv.addNewType(newType)
 
-    def addExternalType(self, newType: Type[Any], *, tsmodule: str = None) -> None:
+    def addExternalType(self, newType: Type[Any], *, tsmodule: str) -> None:
         self._adv.addExternalType(newType, tsmodule=tsmodule)
 
     def addInternalType(
