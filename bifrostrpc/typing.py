@@ -19,6 +19,15 @@ ErrorList = List[str]
 ScalarTypes = Union[Type[str], Type[int], Type[bool]]
 
 
+if sys.version_info >= (3, 10, 0):
+    # 3.10.0 onwards we can use a simple isinstance check
+    def _isnewtype(sometype: Any) -> bool:
+        return isinstance(sometype, NewType)
+else:
+    def _isnewtype(sometype: Any) -> bool:
+        return isinstance(sometype, type(NewType))
+
+
 class Advanced:
     """
     A collection of "advanced" types (NewType()s and dataclasses).
@@ -50,7 +59,7 @@ class Advanced:
 
     def addNewType(self, newType: Type[Any]) -> None:
         # it must be a NewType
-        if not isinstance(newType, type(NewType)):
+        if not _isnewtype(newType):
             raise Exception(f'Not a NewType: {newType!r}')
         name = newType.__name__
         if name in self.newTypes:
@@ -59,7 +68,7 @@ class Advanced:
 
         # register ourselves as being children of our parent (if it is also a NewType)
         parent = newType.__supertype__
-        if isinstance(parent, type(NewType)):
+        if _isnewtype(parent):
             parentName = parent.__name__
             if parentName not in self.newTypes:
                 raise Exception(
@@ -68,7 +77,7 @@ class Advanced:
 
     def addExternalType(self, newType: Type[Any], *, tsmodule: str = None) -> None:
         # it must be a NewType
-        if not isinstance(newType, type(NewType)):
+        if not _isnewtype(newType):
             raise Exception(f'Not a NewType: {newType!r}')
 
         assert newType not in self.externalTypes
@@ -293,8 +302,7 @@ def _getActualTypeName(value: Any) -> str:
 
 
 def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
-    # if it's not a NewType, just return itself and its type name
-    if not isinstance(someType, type(NewType)):
+    if not _isnewtype(someType):
         if sys.version_info < (3, 7, 0):
             # python 3.6 (the earliest python we support) doesn't have the ._name attributes we
             # require below.
