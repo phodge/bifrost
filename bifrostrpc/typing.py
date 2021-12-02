@@ -22,7 +22,9 @@ ScalarTypes = Union[Type[str], Type[int], Type[bool]]
 if sys.version_info >= (3, 10, 0):
     # 3.10.0 onwards we can use a simple isinstance check
     def _isnewtype(sometype: Any) -> bool:
-        return isinstance(sometype, NewType)
+        # XXX: "type: ignore" is need here because NewType isn't a valid 2nd
+        # arg for isinstance() until python3.10
+        return isinstance(sometype, NewType)  # type: ignore
 else:
     def _isnewtype(sometype: Any) -> bool:
         return isinstance(sometype, type(NewType))
