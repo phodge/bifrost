@@ -24,6 +24,7 @@ if sys.version_info >= (3, 10, 0):
     def _isnewtype(sometype: Any) -> bool:
         # XXX: "type: ignore" is need here because NewType isn't a valid 2nd
         # arg for isinstance() until python3.10
+        # pylint: disable=isinstance-second-argument-not-valid-type
         return isinstance(sometype, NewType)  # type: ignore
 else:
     def _isnewtype(sometype: Any) -> bool:
