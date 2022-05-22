@@ -173,6 +173,8 @@ class BifrostRPCService:
                     return make_response('Bifrost RPC method calls must be submitted by POST', 405)
 
                 provided = request.get_json()
+                if not isinstance(provided, dict):
+                    return make_response('Request body must be a JSON object', 400)
 
                 # pop off the __showdataclass__ flag if it's present
                 showdataclasses = bool(provided.pop("__showdataclass__", False))
