@@ -45,8 +45,8 @@ class AuthFailure(Exception):
 class BifrostRPCService:
     _targets: Dict[str, Callable[..., Any]]
 
-    def __init__(self, targets: List[Callable[..., Any]]):
-        self._targets = {fn.__name__: fn for fn in targets}
+    def __init__(self, targets: List[Callable[..., Any]] = None):
+        self._targets = {fn.__name__: fn for fn in (targets or [])}
         self._adv: Advanced = Advanced()
         self._spec: Dict[str, FuncSpec] = {}
         self._factory: Dict[Type[Any], Callable[[], Any]] = {}
@@ -60,6 +60,13 @@ class BifrostRPCService:
         #
         # The nice thing about (A) is that typescript programmer can have his own set of classes
         # that match the interface (maybe even one class that matches multiple interfaces?)
+
+    def rpcmethod(self, fn: Callable[..., Any]) -> Callable[..., Any]:
+        name = fn.__name__
+        if name in self._targets:
+            raise Exception(f"A target named {name} already exists")
+        self._targets[name] = fn
+        return fn
 
     def getThings(self, name: str) -> Tuple[Callable[..., Any], FuncSpec]:
         try:
