@@ -55,3 +55,18 @@ jobs:
         - run: python -m pip install -r requirements_dev.txt
         - run: python -m pip install .
         - run: py.test
+
+    create-new-git-tag:
+        runs-on: ubuntu-latest
+        container: vertigo1/magicpr-demo:2022.0
+        # we only want this to run on the default branch, although GH doesn't
+        # give us a way to get its name automatically here
+        if: ${{ github.ref == 'refs/heads/master' }}
+        steps:
+            - uses: actions/checkout@v2
+            - name: read current version from pyproject.toml
+              run: current_version=$(magicpr read-toml pyproject.toml .tool .poetry .version)
+
+            # create a tag for this project version if it doesn't already exist
+            - name: ensure tag exists
+              run: magicpr ensure-tag-exists "$current_version" --default-branch=master
