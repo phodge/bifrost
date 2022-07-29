@@ -566,6 +566,7 @@ class ScalarTypeSpec(TypeSpec):
 
 
 class LiteralTypeSpec(TypeSpec):
+    # TODO: this needs rewriting to support multiple Literal values
     expected: Union[str, int, bool]
     expectedType: Union[Type[str], Type[int], Type[bool]]
 
