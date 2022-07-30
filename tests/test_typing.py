@@ -1,4 +1,4 @@
-from typing import Any, Optional, Type, Union
+from typing import Optional, Type, Union
 
 import pytest
 from typing_extensions import Literal
