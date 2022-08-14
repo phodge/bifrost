@@ -1,13 +1,17 @@
 import abc
-import sys
-from typing import (Any, Callable, Dict, Iterable, List, NewType, Set, Tuple,
-                    Type, Union, cast, get_type_hints)
-
 import dataclasses
+import sys
 from dataclasses import is_dataclass
+from typing import (TYPE_CHECKING, Any, Callable, Dict, Iterable, List,
+                    NewType, Set, Tuple, Type, Union, cast, get_type_hints)
+
 from paradox.typing import (CrossBool, CrossDict, CrossList, CrossLiteral,
                             CrossNewType, CrossNull, CrossNum, CrossStr,
                             CrossType, CrossUnion)
+
+if TYPE_CHECKING:
+    from paradox.expressions import PanExpr
+
 
 try:
     from typing import Literal  # type: ignore
@@ -564,6 +568,18 @@ class ScalarTypeSpec(TypeSpec):
     def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
         return self.getExported(value, label, False, errors)
 
+    def getMatchExpr(self, value: "PanExpr") -> "PanExpr":
+        from paradox.expressions import isbool, isint, isstr
+
+        if self.scalarType is str:
+            return isstr(value)
+
+        if self.scalarType is int:
+            return isint(value)
+
+        assert self.scalarType is bool
+        return isbool(value)
+
 
 class LiteralTypeSpec(TypeSpec):
     # TODO: this needs rewriting to support multiple Literal values
@@ -573,6 +589,11 @@ class LiteralTypeSpec(TypeSpec):
     def __init__(self, expected: Union[str, int, bool]) -> None:
         self.expected = expected
         self.expectedType = type(expected)
+
+    @property
+    def values(self) -> List[Union[str, int, bool]]:
+        # TODO: get rid of self.expected in favour of having a true .values property
+        return [self.expected]
 
     def getExported(
         self,
