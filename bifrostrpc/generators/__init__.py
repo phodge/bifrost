@@ -20,7 +20,14 @@ class Names:
 
     # TODO: replace all use of old getNewName() with getNewName2() then
     # back-replace name
-    def getNewName2(self, origin: str, base: str, assignable: bool, *, type: CrossType = None) -> PanVar:
+    def getNewName2(
+        self,
+        origin: str,
+        base: str,
+        assignable: bool,
+        *,
+        type: CrossType = None,
+    ) -> PanVar:
         return PanVar(self.getNewName(origin, base, assignable), type)
 
     def getNewName(self, origin: str, base: str, assignable: bool) -> str:

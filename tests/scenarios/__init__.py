@@ -50,4 +50,3 @@ class Scenario:
         if not self._verify_php:
             raise Exception("Not set")
         return self._verify_php
-

@@ -105,7 +105,13 @@ def getFilterBlock(
         with ret.withFor(v_item, var_or_prop) as loop:
             # TODO: also if we want to provide meaningful error messages, we really want to know
             # the idx of the item that was broken and include it in the error message
-            loop.also(getFilterBlock(v_item, f"{label}[$n]", spec=itemspec, names=names, lang=lang))
+            loop.also(getFilterBlock(
+                v_item,
+                f"{label}[$n]",
+                spec=itemspec,
+                names=names,
+                lang=lang,
+            ))
 
         return ret
 
@@ -114,7 +120,11 @@ def getFilterBlock(
 
         # make sure the thing came back as a dict
         with ret.withCond(not_(isdict(var_or_prop))) as cond:
-            _raiseTypeError(cond, pymsg=f"{label} must be of a dict", phpmsg=f"{label} must be an Array")
+            _raiseTypeError(
+                cond,
+                pymsg=f"{label} must be of a dict",
+                phpmsg=f"{label} must be an Array",
+            )
 
         # make sure all dict keys/values have the correct type
         keyspec = spec.keySpec
@@ -126,7 +136,13 @@ def getFilterBlock(
         with ret.withDictIter(var_or_prop, v_value) as loop:
             # TODO: also if we want to provide meaningful error messages, we really want to know
             # the key of the item that was broken and include it in the error message
-            loop.also(getFilterBlock(v_value, f"{label}[$key]", spec=valuespec, names=names, lang=lang))
+            loop.also(getFilterBlock(
+                v_value,
+                f"{label}[$key]",
+                spec=valuespec,
+                names=names,
+                lang=lang,
+            ))
 
         return ret
 
@@ -163,7 +179,12 @@ def getFilterBlock(
     )
 
 
-def _getTypeNoMatchExpr(var_or_prop: PanExpr, spec: TypeSpec, *, lang: Literal['php', 'python']) -> Optional[PanExpr]:
+def _getTypeNoMatchExpr(
+    var_or_prop: PanExpr,
+    spec: TypeSpec,
+    *,
+    lang: Literal['php', 'python'],
+) -> Optional[PanExpr]:
     if isinstance(spec, NullTypeSpec):
         return not_(isnull(var_or_prop))
 
@@ -390,7 +411,8 @@ def _getUnionConverterBlock(
     else:
         innerstmt = ret
 
-    # if there are no complex variants, then the innerstmt needs to terminate by throwing a TypeError
+    # if there are no complex variants then the innerstmt needs to terminate by throwing a
+    # TypeError
     if not complexvariants:
         raiseTypeError(
             innerstmt,
@@ -491,7 +513,8 @@ def _getUnionConverterBlock(
 
         with withCatchTypeError(tryblock) as catchblock:
             catchblock.remark('ignore TypeError - contine on to next variant')
-            # TODO: is there a more language-agnostic way to insert the 'pass' statement for Python?
+            # TODO: is there a more language-agnostic way to insert the 'pass' statement for
+            # Python?
             if lang == 'python':
                 catchblock.also(pyexpr('pass'))
 

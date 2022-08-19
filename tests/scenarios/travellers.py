@@ -27,7 +27,11 @@ TRAVELLER0 = Scenario(
         "__dataclass__": "Traveller",
         "travellerId": "fred@example.com",
         "birthCity": {"__dataclass__": "City", "cityName": "Sydney", "countryName": "Australia"},
-        "marriageCity": {"__dataclass__": "City", "cityName": "Brisbane", "countryName": "Australia"},
+        "marriageCity": {
+            "__dataclass__": "City",
+            "cityName": "Brisbane",
+            "countryName": "Australia",
+        },
         "citiesVisited": [
             {"__dataclass__": "City", "cityName": "Cairns", "countryName": "AUS"},
             "Los Angeles",
