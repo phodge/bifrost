@@ -3,6 +3,9 @@ from typing import Dict, Union
 from paradox.expressions import PanVar
 from paradox.typing import CrossType
 
+# Prevent warnings about args named 'type'
+# pylint: disable=W0622
+
 
 class Names:
     def __init__(self) -> None:
