@@ -95,7 +95,13 @@ def _generateWrappers(
         names = Names()
 
         try:
-            filterblock = getFilterBlock(v_result, label='$DATA', spec=retspec, names=names, lang='python')
+            filterblock = getFilterBlock(
+                v_result,
+                label='$DATA',
+                spec=retspec,
+                names=names,
+                lang='python',
+            )
             conv.also(filterblock)
             conv.alsoReturn(v_result)
         except FilterNotPossible:
