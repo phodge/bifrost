@@ -26,6 +26,7 @@ pylint==2.12.1; python_full_version >= "3.6.2"
 pyparsing==3.0.6; python_version >= "3.6"
 pytest==6.2.5; python_version >= "3.6"
 pytoml==0.1.21
+setuptools==63.4.1; python_version >= "3.7" and python_version < "4.0" and python_full_version >= "3.6.2"
 toml==0.10.2; python_full_version >= "3.6.2" and python_version >= "3.6"
 typed-ast==1.4.3; python_version < "3.8" and python_version >= "3.6" and implementation_name == "cpython" and python_full_version >= "3.6.2"
 types-click==7.1.8
