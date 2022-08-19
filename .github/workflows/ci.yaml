@@ -1,4 +1,9 @@
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    # run on all pull requests
 
 jobs:
     verify_requirements_exported:
