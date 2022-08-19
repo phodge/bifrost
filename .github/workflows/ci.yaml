@@ -29,8 +29,8 @@ jobs:
                 python-version: 3.8
             - run: pip install -r requirements_dev.txt
             - run: mypy .
-            - run: flake8 setup.py bifrostrpc tests
-            - run: pylint setup.py bifrostrpc
+            - run: flake8 bifrostrpc tests
+            - run: pylint bifrostrpc
 
     unit_tests:
       name: "Pytest"
