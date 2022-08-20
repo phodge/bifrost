@@ -22,7 +22,7 @@ pytest = "^6.0.0"
 pylint = "^2.6.0"
 # these are required for pylint to run
 pytoml = "^0.1.21"
-Flask = "^1.1.2"
+Flask = "^2.2.2"
 types-dataclasses = "^0.6.1"
 types-Flask = "^1.1.5"
 
