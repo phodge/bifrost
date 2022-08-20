@@ -12,7 +12,7 @@ from paradox.typing import CrossType
 
 TYPE_ERROR_CLS = {
     "php": "UnexpectedValueException",
-    "python": "TypeErro",
+    "python": "TypeError",
 }
 
 

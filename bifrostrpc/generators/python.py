@@ -1,6 +1,7 @@
 from typing import List, Tuple
 
-from paradox.expressions import PanCall, PanVar, pan, pyexpr
+from paradox.expressions import (PanCall, PanStringBuilder, PanVar, exacteq_,
+                                 not_, pan, pandict, pyexpr)
 from paradox.generate.files import FilePython
 from paradox.generate.statements import (ClassSpec, DictBuilderStatement,
                                          FunctionSpec)
@@ -41,13 +42,13 @@ def generateClient(
         dest.contents.also(dcspec)
 
     # generate function wrappers
-    dest.contents.also(_generateWrappers(classname, funcspecs, adv, flavour))
+    dest.contents.also(_generateClientClass(classname, funcspecs, adv, flavour))
 
     dest.writefile()
     dest.makepretty()
 
 
-def _generateWrappers(
+def _generateClientClass(
     classname: str,
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
@@ -68,23 +69,70 @@ def _generateWrappers(
     )
 
     # the method that should be called
-    dispatchfn.addPositionalArg('method', str)
+    v_method = dispatchfn.addPositionalArg('method', str)
     # a dict of params to pass to the method
-    dispatchfn.addPositionalArg('params', dictof(str, CrossAny()))
+    v_params = dispatchfn.addPositionalArg('params', dictof(str, CrossAny()))
     # converter will be called with the result of the method call.
     # It may modify result before returning it. It may raise a TypeError
     # if any part of result does not match the method's return type.
     dispatchfn.addPositionalArg('converter', CrossCallable([CrossAny()], CrossAny()))
 
     if flavour == 'requests':
-        # TODO: finish this
-        dispatchfn.alsoRaise(
-            msg="TODO: perform the request using requests library"
-        )
+        # if the flavour is 'requests', then we want to add host/port constructor args to the class
+        p_host = cls.addProperty('host', str, initarg=True, tsreadonly=True)
+        p_port = cls.addProperty('port', int, initarg=True, tsreadonly=True)
+
+        urlexpr = PanStringBuilder([
+            pan('http://'),
+            p_host,
+            pan(':'),
+            p_port,
+            pan('/api.v1/call/'),
+            v_method,
+        ])
+        v_url = dispatchfn.alsoDeclare('url', str, urlexpr)
+        v_headers = dispatchfn.alsoDeclare('headers', "no_type", pandict({
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        }))
+        dispatchfn.alsoImportPy('requests')
+        v_result = dispatchfn.alsoDeclare('result', "no_type", PanCall(
+            'requests.post',
+            v_url,
+            json=v_params,
+            headers=v_headers,
+        ))
+        statuscodeexpr = v_result.getprop('status_code', type=CrossAny())
+        # TODO: return ApiBroken instead when appropriate
+        # TODO: have more descriptive errors for various kinds of HTTP responses
+        with dispatchfn.withCond(not_(exacteq_(statuscodeexpr, 200))) as cond:
+            cond.alsoReturn(PanCall('ApiOutage', PanStringBuilder([
+                pan('Status Code '),
+                statuscodeexpr,
+                pan(': '),
+                v_result.getprop('text', type=CrossAny()),
+            ])))
+        dispatchfn.remark('read JSON blob or bomb out')
+        with dispatchfn.withTryBlock() as tryblock:
+            v_data = tryblock.alsoDeclare('data', 'no_type', PanCall('result.json'))
+            with tryblock.withCatchBlock2(PanVar('e', None), pyclass='Exception') as catchblock:
+                catchblock.alsoReturn(PanCall('ApiBroken', PanStringBuilder([
+                    pan('Response was not valid JSON: '),
+                    pyexpr('e.args[0]'),
+                ])))
+        dispatchfn.remark('convert from JSON to real types')
+        with dispatchfn.withTryBlock() as tryblock:
+            v_ret = tryblock.alsoDeclare('ret', 'no_type', PanCall('converter', v_data))
+            with tryblock.withCatchBlock2(PanVar('e', None), pyclass='TypeError') as catchblock:
+                catchblock.alsoReturn(PanCall('ApiBroken', PanStringBuilder([
+                    pan('Response data from '),
+                    v_method,
+                    pan(' was invalid: '),
+                    pyexpr('e.args[0]'),
+                ])))
+        dispatchfn.alsoReturn(v_ret)
     else:
         assert flavour == 'abstract'
-        # TODO: abstract function should get '...' body automatically?
-        # dispatchfn.also('...')
 
     for name, funcspec in funcspecs:
         retspec = funcspec.getReturnSpec()
