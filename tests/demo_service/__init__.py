@@ -1,10 +1,9 @@
-from typing import NewType
-
 from flask import Flask
 
 from bifrostrpc import BifrostRPCService
 
 service = BifrostRPCService()
+
 
 class NoLogin:
     pass

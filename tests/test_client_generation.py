@@ -52,7 +52,7 @@ def test_generate_python_client(flavour: str, demo_service: Any, demo_service_po
         get_client_path.write_text(get_client_script)
 
         demo_script = dedent(
-            f'''
+            '''
             from get_client import get_client
 
             t = get_client()
