@@ -32,6 +32,12 @@ class Gizmo:
     affordances: Union[List[Lever], List[Toggle], List[Button]]
 
 
+@dataclass
+class Widget:
+    name: str
+    inputs: Union[List[Toggle], List[Button], List[int]]
+
+
 GADGET0 = Scenario(
     [Gadget, Button, Toggle, Lever],
     {
@@ -93,5 +99,53 @@ GIZMO0 = Scenario(
         assert($VAR->affordances[0]->label === "Red");
         assert($VAR->affordances[1] instanceof Toggle);
         assert($VAR->affordances[1]->label === "Blue");
+    ''',
+)
+
+
+WIDGET0 = Scenario(
+    [Widget, Toggle, Button],
+    {
+        "__dataclass__": "Widget",
+        "name": "Uberwidget",
+        "inputs": [
+            {"__dataclass__": "Toggle", "label": "Red"},
+            {"__dataclass__": "Toggle", "label": "Blue"},
+            {"__dataclass__": "Toggle", "label": "Green"},
+        ],
+    },
+    verify_php='''
+        assert($VAR->name === "Uberwidget");
+        assert(is_array($VAR->inputs));
+        assert(count($VAR->inputs) === 3);
+        assert($VAR->inputs[0] instanceof Toggle);
+        assert($VAR->inputs[1] instanceof Toggle);
+        assert($VAR->inputs[2] instanceof Toggle);
+        assert($VAR->inputs[0]->label === "Red");
+        assert($VAR->inputs[1]->label === "Blue");
+        assert($VAR->inputs[2]->label === "Green");
+    ''',
+)
+
+
+WIDGET1 = Scenario(
+    [Widget, Toggle, Button],
+    {
+        "__dataclass__": "Widget",
+        "name": "Uberwidget",
+        "inputs": [55, 66, 77, 99],
+    },
+    verify_php='''
+        assert($VAR->name === "Uberwidget");
+        assert(is_array($VAR->inputs));
+        assert(count($VAR->inputs) === 4);
+        assert(is_int($VAR->inputs[0]));
+        assert(is_int($VAR->inputs[1]));
+        assert(is_int($VAR->inputs[2]));
+        assert(is_int($VAR->inputs[3]));
+        assert($VAR->inputs[0] === 55);
+        assert($VAR->inputs[1] === 66);
+        assert($VAR->inputs[2] === 77);
+        assert($VAR->inputs[3] === 99);
     ''',
 )
