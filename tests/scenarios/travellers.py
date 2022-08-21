@@ -19,6 +19,8 @@ class Traveller:
     citiesVisited: List[Union[City, str]]
     # mapping of country name -> list of years it was visited
     countriesVisited: Dict[str, List[int]]
+    # mapping of YEAR to List of Cities planned to visit in that year
+    holidays: Dict[str, List[Union[City, str]]]
 
 
 TRAVELLER0 = Scenario(
@@ -40,6 +42,19 @@ TRAVELLER0 = Scenario(
         "countriesVisited": {
             "USA": [2003, 2008, 2011],
             "France": [],
+        },
+        "holidays": {
+            "2013": [
+                "Los Angeles",
+                "Las Vegas",
+            ],
+            # no holiday in 2014
+            "2014": [],
+            "2015": [
+                {"__dataclass__": "City", "cityName": "Paris", "countryName": "France"},
+                "New York",
+                {"__dataclass__": "City", "cityName": "Rome", "countryName": "Italy"},
+            ],
         },
     },
     verify_php='''
@@ -66,6 +81,18 @@ TRAVELLER0 = Scenario(
         assert($VAR->countriesVisited["USA"][2] === 2011);
         assert(is_array($VAR->countriesVisited["France"]));
         assert(count($VAR->countriesVisited["France"]) === 0);
+        assert(is_array($VAR->holidays));
+        assert(count($VAR->holidays) === 3);
+        assert(is_array($VAR->holidays["2013"]) && count($VAR->holidays["2013"]) === 2);
+        assert(is_array($VAR->holidays["2014"]) && count($VAR->holidays["2014"]) === 0);
+        assert(is_array($VAR->holidays["2015"]) && count($VAR->holidays["2015"]) === 3);
+        assert($VAR->holidays["2013"][0] === "Los Angeles");
+        assert($VAR->holidays["2013"][1] === "Las Vegas");
+        assert($VAR->holidays["2015"][0] instanceof City);
+        assert($VAR->holidays["2015"][0]->cityName === "Paris");
+        assert($VAR->holidays["2015"][1] === "New York");
+        assert($VAR->holidays["2015"][2] instanceof City);
+        assert($VAR->holidays["2015"][2]->cityName === "Rome");
     ''',
 )
 
@@ -79,6 +106,7 @@ TRAVELLER1 = Scenario(
         "marriageCity": None,
         "citiesVisited": [],
         "countriesVisited": {},
+        "holidays": {},
     },
     verify_php='''
         assert($VAR->travellerId === 54321);
@@ -90,5 +118,7 @@ TRAVELLER1 = Scenario(
         assert(count($VAR->citiesVisited) === 0);
         assert(is_array($VAR->countriesVisited));
         assert(count($VAR->countriesVisited) === 0);
+        assert(is_array($VAR->holidays));
+        assert(count($VAR->holidays) === 0);
     ''',
 )
