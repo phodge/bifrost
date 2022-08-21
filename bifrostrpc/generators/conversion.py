@@ -411,9 +411,9 @@ def _getUnionConverterBlock(
     else:
         innerstmt = ret
 
-    # if there are no complex variants then the innerstmt needs to terminate by throwing a
-    # TypeError
     if not complexvariants:
+        # this should be impossible - a UnionTypeSpec with no complex variants would have been
+        # handled already using a filter block from getFilterBlock().
         raiseTypeError(
             innerstmt,
             pymsg=f"{label} did not match any variant",
