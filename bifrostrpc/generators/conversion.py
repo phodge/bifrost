@@ -1,13 +1,13 @@
 import dataclasses
 from typing import Any, List, Optional, Type
 
-from paradox.expressions import (PanCall, PanExpr, PanList, PanVar, and_,
-                                 exacteq_, isbool, isdict, isint, islist,
+from paradox.expressions import (PanCall, PanDict, PanExpr, PanList, PanVar,
+                                 and_, exacteq_, isbool, isdict, isint, islist,
                                  isnull, isstr, not_, pan, phpexpr, pyexpr)
 from paradox.generate.statements import (AssignmentStatement, ClassSpec,
                                          ConditionalBlock, FunctionSpec,
                                          Statement, Statements)
-from paradox.typing import CrossAny, CrossNewType
+from paradox.typing import CrossAny, CrossNewType, CrossStr
 from typing_extensions import Literal
 
 from bifrostrpc.generators import Names
@@ -352,6 +352,56 @@ def getConverterBlock(
                 loop.also(converterblock)
                 converterexpr = v_item_converted
             loop.alsoAppend(v_out, converterexpr)
+
+        return ret
+
+    if isinstance(spec, DictTypeSpec):
+        ret = Statements()
+
+        # make sure the thing came back as a list
+        with ret.withCond(not_(isdict(var_or_prop))) as cond:
+            _raiseTypeError(
+                cond,
+                pymsg=f"{label} must be a dict",
+                phpmsg=f"{label} must be an Array",
+            )
+
+        ret.alsoAssign(v_out, PanDict({}, CrossStr(), CrossAny()))
+
+        # add conversions for the items - we know filter blocks aren't possible because if they
+        # were, we wouldn't be using getConverterBlock on this DictTypeSpec
+        valuespec = spec.valueSpec
+        keyspec = spec.keySpec
+        assert isinstance(keyspec, ScalarTypeSpec)
+        assert keyspec.scalarType is str
+        v_val = names.getNewName2(var_or_prop.rawname, 'val', False)
+        v_key = names.getNewName2(var_or_prop.rawname, 'key', False)
+        with ret.withDictIter(var_or_prop, v_val, v_key) as loop:
+            # TODO: also if we want to provide meaningful error messages, we really want to know
+            # the key of the item that was broken and include it in the error message
+            try:
+                converterexpr = getConverterExpr(
+                    v_val,
+                    label=f"{label}[$key]",
+                    spec=valuespec,
+                    adv=adv,
+                    lang=lang,
+                )
+            except ConverterNotPossible:
+                v_val_converted = names.getNewName2(var_or_prop.rawname, 'val_converted', True)
+                converterblock = getConverterBlock(
+                    v_val,
+                    v_val_converted,
+                    label=f"{label}[$key]",
+                    spec=valuespec,
+                    names=names,
+                    adv=adv,
+                    hoistcontext=hoistcontext,
+                    lang=lang,
+                )
+                loop.also(converterblock)
+                converterexpr = v_val_converted
+            loop.alsoAssign(v_out.getitem(v_key), converterexpr)
 
         return ret
 
