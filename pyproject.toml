@@ -25,6 +25,7 @@ pytoml = "^0.1.21"
 Flask = "^2.2.2"
 types-dataclasses = "^0.6.1"
 types-Flask = "^1.1.5"
+requests = "^2.28.1"
 
 [tool.tox]
 legacy_tox_ini = """
