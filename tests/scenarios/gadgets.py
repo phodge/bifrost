@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from . import Scenario
 
@@ -36,6 +36,13 @@ class Gizmo:
 class Widget:
     name: str
     inputs: Union[List[Toggle], List[Button], List[int]]
+
+
+@dataclass
+class Device:
+    name: str
+    interfaces: Dict[str, Button]
+    settings: Dict[str, Union[Button, Toggle]]
 
 
 GADGET0 = Scenario(
@@ -147,5 +154,55 @@ WIDGET1 = Scenario(
         assert($VAR->inputs[1] === 66);
         assert($VAR->inputs[2] === 77);
         assert($VAR->inputs[3] === 99);
+    ''',
+)
+
+
+DEVICE0 = Scenario(
+    [Device, Button, Toggle],
+    {
+        "__dataclass__": "Device",
+        "name": "Device Zero",
+        "interfaces": [
+            {"__dataclass__": "Button", "label": "On"},
+            {"__dataclass__": "Button", "label": "Off"},
+        ],
+        "settings": {
+            "dehumidifier": {"__dataclass__": "Button", "label": "Active"},
+            "auto-adjust": {"__dataclass__": "Toggle", "label": "Auto"},
+        },
+    },
+    verify_php='''
+        assert($VAR->name === "Device Zero");
+        assert(is_array($VAR->interfaces));
+        assert(count($VAR->interfaces) === 2);
+        assert($VAR->interfaces[0] instanceof Button);
+        assert($VAR->interfaces[1] instanceof Button);
+        assert($VAR->interfaces[0]->label === "On");
+        assert($VAR->interfaces[1]->label === "Off");
+        assert(is_array($VAR->settings));
+        assert(count($VAR->settings) === 2);
+        assert($VAR->settings["dehumidifier"] instanceof Button);
+        assert($VAR->settings["auto-adjust"]  instanceof Toggle);
+        assert($VAR->settings["dehumidifier"]->label === "Active");
+        assert($VAR->settings["auto-adjust"]->label === "Auto");
+    ''',
+)
+
+
+DEVICE1 = Scenario(
+    [Device, Button, Toggle],
+    {
+        "__dataclass__": "Device",
+        "name": "The One Device",
+        "interfaces": {},
+        "settings": {},
+    },
+    verify_php='''
+        assert($VAR->name === "The One Device");
+        assert(is_array($VAR->interfaces));
+        assert(count($VAR->interfaces) === 0);
+        assert(is_array($VAR->settings));
+        assert(count($VAR->settings) === 0);
     ''',
 )
