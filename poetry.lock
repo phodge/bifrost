@@ -272,7 +272,7 @@ pyparsing = ">=2.0.2,<3.0.5 || >3.0.5"
 
 [[package]]
 name = "paradox-codegen"
-version = "0.13.0"
+version = "0.14.0"
 description = ""
 category = "main"
 optional = false
@@ -287,8 +287,8 @@ typing-extensions = {version = "^3.7.4", markers = "python_version < \"3.8\""}
 [package.source]
 type = "git"
 url = "https://github.com/phodge/paradox.git"
-reference = "0.13.0"
-resolved_reference = "535ef29c3f43c95f2ac1fec5ae13ecad392f1e30"
+reference = "0.14.0"
+resolved_reference = "d443ab5342ba82bece129daeb5b1d33a0519ce13"
 
 [[package]]
 name = "pathspec"
@@ -519,16 +519,16 @@ python-versions = "*"
 
 [[package]]
 name = "urllib3"
-version = "1.26.11"
+version = "1.26.12"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*, !=3.5.*, <4"
 
 [package.extras]
+brotli = ["brotlicffi (>=0.8.0)", "brotli (>=1.0.9)", "brotlipy (>=0.6.0)"]
+secure = ["pyOpenSSL (>=0.14)", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "certifi", "urllib3-secure-extra", "ipaddress"]
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
-secure = ["ipaddress", "certifi", "idna (>=2.0.0)", "cryptography (>=1.3.4)", "pyOpenSSL (>=0.14)"]
-brotli = ["brotlipy (>=0.6.0)", "brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
 
 [[package]]
 name = "werkzeug"
@@ -567,7 +567,7 @@ docs = ["jaraco.tidelift (>=1.4)", "rst.linker (>=1.9)", "jaraco.packaging (>=9)
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7,<4.0"
-content-hash = "067e9c37c0f53c365db13820930fef110904b8a321910bf1314a8ecbabd3f7a8"
+content-hash = "79c9ff10d3087ec862975de65ee3f1500bab587dd80c0b523f2959cb818384bb"
 
 [metadata.files]
 astroid = [
@@ -891,8 +891,8 @@ typing-extensions = [
     {file = "typing_extensions-3.10.0.2.tar.gz", hash = "sha256:49f75d16ff11f1cd258e1b988ccff82a3ca5570217d7ad8c5f48205dd99a677e"},
 ]
 urllib3 = [
-    {file = "urllib3-1.26.11-py2.py3-none-any.whl", hash = "sha256:c33ccba33c819596124764c23a97d25f32b28433ba0dedeb77d873a38722c9bc"},
-    {file = "urllib3-1.26.11.tar.gz", hash = "sha256:ea6e8fb210b19d950fab93b60c9009226c63a28808bc8386e05301e25883ac0a"},
+    {file = "urllib3-1.26.12-py2.py3-none-any.whl", hash = "sha256:b930dd878d5a8afb066a637fbb35144fe7901e3b209d1cd4f524bd0e9deee997"},
+    {file = "urllib3-1.26.12.tar.gz", hash = "sha256:3fa96cf423e6987997fc326ae8df396db2a8b7c667747d47ddd8ecba91f4a74e"},
 ]
 werkzeug = [
     {file = "Werkzeug-2.2.2-py3-none-any.whl", hash = "sha256:f979ab81f58d7318e064e99c4506445d60135ac5cd2e177a2de0089bfd4c9bd5"},
