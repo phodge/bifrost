@@ -21,7 +21,7 @@ mccabe==0.6.1; python_full_version >= "3.6.2"
 mypy-extensions==0.4.3; python_full_version >= "3.6.2" and python_version < "4.0" and python_version >= "3.5"
 mypy==0.901; python_version >= "3.5"
 packaging==21.3; python_version >= "3.6"
-paradox-codegen @ git+https://github.com/phodge/paradox.git@0.13.0 ; python_full_version >= "3.6.2" and python_version < "4.0"
+paradox-codegen @ git+https://github.com/phodge/paradox.git@0.14.0 ; python_full_version >= "3.6.2" and python_version < "4.0"
 pathspec==0.9.0; python_full_version >= "3.6.2" and python_version < "4.0"
 platformdirs==2.5.2; python_version >= "3.7" and python_full_version >= "3.6.2" and python_version < "4.0"
 pluggy==1.0.0; python_version >= "3.6"
@@ -43,7 +43,7 @@ types-jinja2==2.11.9
 types-markupsafe==1.1.10
 types-werkzeug==1.0.9
 typing-extensions==3.10.0.2; python_full_version >= "3.6.2" and python_version < "3.8" and python_version >= "3.5" and (python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "3.8" or python_full_version >= "3.5.0" and python_version < "3.8" and python_version >= "3.7") or python_version < "3.8"
-urllib3==1.26.11; python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "4" or python_full_version >= "3.6.0" and python_version < "4" and python_version >= "3.7"
+urllib3==1.26.12; python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "4" or python_full_version >= "3.6.0" and python_version < "4" and python_version >= "3.7"
 werkzeug==2.2.2; python_version >= "3.7"
 wrapt==1.14.1; python_full_version >= "3.6.2"
 zipp==3.8.1; python_version >= "3.7" and python_full_version < "3.0.0" and python_version < "3.8" or python_full_version >= "3.5.0" and python_version < "3.8" and python_version >= "3.7"
