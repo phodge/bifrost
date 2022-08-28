@@ -133,10 +133,10 @@ def getFilterBlock(
         valuespec = spec.valueSpec
         v_value = names.getNewName2(var_or_prop.rawname, 'value', False)
 
-        with ret.withDictIter(var_or_prop, v_value) as loop:
+        with ret.withDictIter(var_or_prop, v_value) as loop2:
             # TODO: also if we want to provide meaningful error messages, we really want to know
             # the key of the item that was broken and include it in the error message
-            loop.also(getFilterBlock(
+            loop2.also(getFilterBlock(
                 v_value,
                 f"{label}[$key]",
                 spec=valuespec,
@@ -376,7 +376,7 @@ def getConverterBlock(
         assert keyspec.scalarType is str
         v_val = names.getNewName2(var_or_prop.rawname, 'val', False)
         v_key = names.getNewName2(var_or_prop.rawname, 'key', False)
-        with ret.withDictIter(var_or_prop, v_val, v_key) as loop:
+        with ret.withDictIter(var_or_prop, v_val, v_key) as loop3:
             # TODO: also if we want to provide meaningful error messages, we really want to know
             # the key of the item that was broken and include it in the error message
             try:
@@ -399,9 +399,9 @@ def getConverterBlock(
                     hoistcontext=hoistcontext,
                     lang=lang,
                 )
-                loop.also(converterblock)
+                loop3.also(converterblock)
                 converterexpr = v_val_converted
-            loop.alsoAssign(v_out.getitem(v_key), converterexpr)
+            loop3.alsoAssign(v_out.getitem(v_key), converterexpr)
 
         return ret
 
