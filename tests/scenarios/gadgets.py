@@ -42,7 +42,7 @@ class Widget:
 class Device:
     name: str
     interfaces: Dict[str, Button]
-    settings: Dict[str, Union[Button, Toggle]]
+    settings: Optional[Dict[str, Union[Button, Toggle]]]
 
 
 GADGET0 = Scenario(
@@ -204,5 +204,23 @@ DEVICE1 = Scenario(
         assert(count($VAR->interfaces) === 0);
         assert(is_array($VAR->settings));
         assert(count($VAR->settings) === 0);
+    ''',
+)
+
+
+DEVICE2 = Scenario(
+    [Device, Button, Toggle],
+    {
+        "__dataclass__": "Device",
+        "name": "Device, Too",
+        "interfaces": {},
+        # NOTE: this is where we demonstrate that an Optional dataclass property can be safely
+        # omitted
+    },
+    verify_php='''
+        assert($VAR->name === "Device, Too");
+        assert(is_array($VAR->interfaces));
+        assert(count($VAR->interfaces) === 0);
+        assert($VAR->settings === null);
     ''',
 )

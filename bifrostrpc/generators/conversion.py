@@ -224,6 +224,11 @@ def _getTypeNoMatchExpr(
         # not possible
         return None
 
+    if isinstance(spec, DictTypeSpec):
+        # FIXME: this should actually be possible in some circumstances using any() and a list
+        # comprehension
+        return None
+
     raise Exception(f"Unexpected TypeSpec {spec!r}")
 
 
