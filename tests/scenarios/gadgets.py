@@ -45,6 +45,12 @@ class Device:
     settings: Optional[Dict[str, Union[Button, Toggle]]]
 
 
+@dataclass
+class Machine:
+    name: str
+    subunits: List[Dict[str, Union[Gadget, Gizmo]]]
+
+
 GADGET0 = Scenario(
     [Gadget, Button, Toggle, Lever],
     {
@@ -222,5 +228,132 @@ DEVICE2 = Scenario(
         assert(is_array($VAR->interfaces));
         assert(count($VAR->interfaces) === 0);
         assert($VAR->settings === null);
+    ''',
+)
+
+
+MACHINE0 = Scenario(
+    [Machine, Gadget, Gizmo, Toggle, Button, Lever],
+    {
+        "__dataclass__": "Machine",
+        "name": "Deus Ex Machina",
+        "subunits": [
+            {
+                "G001": {
+                    "__dataclass__": "Gadget",
+                    "name": "G001",
+                    "controls": [
+                        {"__dataclass__": "Button", "label": "Alpha"},
+                        {"__dataclass__": "Button", "label": "Beta"},
+                    ],
+                },
+                "G002": {
+                    "__dataclass__": "Gizmo",
+                    "name": "G002",
+                    "affordances": [
+                        {"__dataclass__": "Toggle", "label": "Gamma"},
+                        {"__dataclass__": "Toggle", "label": "Delta"},
+                        {"__dataclass__": "Toggle", "label": "Epsilon"},
+                    ],
+                },
+            },
+            {
+                "J003": {
+                    "__dataclass__": "Gizmo",
+                    "name": "J003",
+                    "affordances": [],
+                },
+                "J004": {
+                    "__dataclass__": "Gadget",
+                    "name": "J004",
+                    "controls": [
+                        {"__dataclass__": "Lever", "label": "Zeta"},
+                    ],
+                    "powerActivator": {"__dataclass__": "Button", "label": "Eta"},
+                },
+            },
+        ],
+    },
+    verify_php='''
+        assert($VAR->name === "Deus Ex Machina");
+        assert(is_array($VAR->subunits));
+        assert(count($VAR->subunits) === 2);
+        assert(is_array($VAR->subunits[0]));
+        assert(count($VAR->subunits[0]) === 2);
+        assert(is_array($VAR->subunits[1]));
+        assert(count($VAR->subunits[1]) === 2);
+        $G001 = $VAR->subunits[0]["G001"];
+        $G002 = $VAR->subunits[0]["G002"];
+        $J003 = $VAR->subunits[1]["J003"];
+        $J004 = $VAR->subunits[1]["J004"];
+
+        assert($G001 instanceof Gadget);
+        assert($G001->name === "G001");
+        assert(count($G001->controls) === 2);
+        assert($G001->controls[0] instanceof Button);
+        assert($G001->controls[0]->label === "Alpha");
+        assert($G001->controls[1] instanceof Button);
+        assert($G001->controls[1]->label === "Beta");
+        assert($G001->powerActivator === null);
+
+        assert($G002 instanceof Gizmo);
+        assert($G002->name === "G002");
+        assert(count($G002->affordances) === 3);
+        assert($G002->affordances[0] instanceof Toggle);
+        assert($G002->affordances[0]->label === "Gamma");
+        assert($G002->affordances[1] instanceof Toggle);
+        assert($G002->affordances[1]->label === "Delta");
+        assert($G002->affordances[2] instanceof Toggle);
+        assert($G002->affordances[2]->label === "Epsilon");
+
+        assert($J003 instanceof Gizmo);
+        assert($J003->name === "J003");
+        assert(count($J003->affordances) === 0);
+
+        assert($J004 instanceof Gadget);
+        assert($J004->name === "J004");
+        assert(count($J004->controls) === 1);
+        assert($J004->controls[0] instanceof Lever);
+        assert($J004->controls[0]->label === "Zeta");
+        assert($J004->powerActivator instanceof Button);
+        assert($J004->powerActivator->label === "Eta");
+    ''',
+)
+
+
+MACHINE1 = Scenario(
+    [Machine, Gadget, Gizmo, Toggle, Button, Lever],
+    {
+        "__dataclass__": "Machine",
+        "name": "Rage Against the Machine",
+        "subunits": [{}, {}, {}, {}],
+    },
+    verify_php='''
+        assert($VAR->name === "Rage Against the Machine");
+        assert(is_array($VAR->subunits));
+        assert(count($VAR->subunits) === 4);
+        assert(is_array($VAR->subunits[0]));
+        assert(count($VAR->subunits[0]) === 0);
+        assert(is_array($VAR->subunits[1]));
+        assert(count($VAR->subunits[1]) === 0);
+        assert(is_array($VAR->subunits[2]));
+        assert(count($VAR->subunits[2]) === 0);
+        assert(is_array($VAR->subunits[3]));
+        assert(count($VAR->subunits[3]) === 0);
+    ''',
+)
+
+
+MACHINE2 = Scenario(
+    [Machine, Gadget, Gizmo, Toggle, Button, Lever],
+    {
+        "__dataclass__": "Machine",
+        "name": "Null Machine",
+        "subunits": [],
+    },
+    verify_php='''
+        assert($VAR->name === "Null Machine");
+        assert(is_array($VAR->subunits));
+        assert(count($VAR->subunits) === 0);
     ''',
 )

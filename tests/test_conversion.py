@@ -11,7 +11,8 @@ from paradox.typing import CrossAny
 
 from .scenarios import Scenario, json_obj_to_php
 from .scenarios.gadgets import (DEVICE0, DEVICE1, DEVICE2, GADGET0, GADGET1,
-                                GIZMO0, WIDGET0, WIDGET1)
+                                GIZMO0, MACHINE0, MACHINE1, MACHINE2, WIDGET0,
+                                WIDGET1)
 from .scenarios.pets import PET0, PET1
 from .scenarios.travellers import TRAVELLER0, TRAVELLER1
 from .scenarios.users import USER0, USER1
@@ -37,6 +38,9 @@ def _run_php(script: str, **kwargs: Any) -> None:
     DEVICE0,
     DEVICE1,
     DEVICE2,
+    MACHINE0,
+    MACHINE1,
+    MACHINE2,
 ])
 def test_get_dataclass_spec_php(scenario: Scenario) -> None:
     from bifrostrpc.generators.conversion import getDataclassSpec
