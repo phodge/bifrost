@@ -8,6 +8,7 @@ from paradox.expressions import (PanCall, PanDict, PanExpr, PanList, PanVar,
 from paradox.generate.statements import (AssignmentStatement, ClassSpec,
                                          ConditionalBlock, FunctionSpec,
                                          Statement, Statements)
+from paradox.interfaces import AcceptsStatements
 from paradox.typing import CrossAny, CrossNewType, CrossStr
 from typing_extensions import Literal
 
@@ -42,7 +43,7 @@ def getFilterBlock(
     This method raises a FilterNotPossible exception if the TypeSpec doesnt support it (e.g. for
     Dataclasses).
     """
-    def _raiseTypeError(context: Statements, *, pymsg: str, phpmsg: str) -> None:
+    def _raiseTypeError(context: AcceptsStatements, *, pymsg: str, phpmsg: str) -> None:
         if varianterror:
             raiseTypeError(
                 context,
@@ -276,7 +277,7 @@ def getConverterBlock(
     spec: TypeSpec,
     names: Names,
     adv: Advanced,
-    hoistcontext: Statements,
+    hoistcontext: AcceptsStatements,
     lang: Literal['python', 'php'],
     varianterror: bool = False,
 ) -> Statement:
@@ -436,7 +437,7 @@ def _getUnionConverterBlock(
     spec: UnionTypeSpec,
     names: Names,
     adv: Advanced,
-    hoistcontext: Statements,
+    hoistcontext: AcceptsStatements,
     lang: Literal['python', 'php'],
 ) -> Statements:
     ret = Statements()
@@ -590,7 +591,7 @@ def getFilterOrConverterBlock(
     spec: TypeSpec,
     names: Names,
     adv: Advanced,
-    hoistcontext: Statements,
+    hoistcontext: AcceptsStatements,
     lang: Literal['python', 'php'],
     varianterror: bool = False,
 ) -> Statement:
@@ -622,7 +623,7 @@ def getDataclassSpec(
     *,
     adv: Advanced,
     lang: Literal['python', 'php'],
-    hoistcontext: Statements,
+    hoistcontext: AcceptsStatements,
 ) -> ClassSpec:
     name = dc.__name__
     cls = ClassSpec(name, isdataclass=True)
