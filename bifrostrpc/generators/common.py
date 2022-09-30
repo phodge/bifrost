@@ -4,12 +4,11 @@ from paradox.generate.statements import ClassSpec
 
 def appendFailureModeClasses(dest: FileSpec) -> None:
     dest.contents.remark('failure modes')
-    af = ClassSpec(
+    af = dest.contents.also(ClassSpec(
         'ApiFailure',
         docstring=['parent class of all failure modes'],
-        appendto=dest.contents,
         tsexport=True,
-    )
+    ))
     af.addProperty('message', str, initarg=True)
     dest.contents.also(ClassSpec(
         'ApiOutage',
