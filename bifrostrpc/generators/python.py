@@ -38,8 +38,9 @@ def generateClient(
 
     # make copies of all our dataclasses
     for dc in adv.getAllDataclasses():
-        dcspec = getDataclassSpec(dc, adv=adv, lang='python')
-        dest.contents.also(dcspec)
+        dest.contents.also(
+            getDataclassSpec(dc, adv=adv, lang='python', hoistcontext=dest.contents)
+        )
 
     # generate function wrappers
     dest.contents.also(_generateClientClass(classname, funcspecs, adv, flavour))
