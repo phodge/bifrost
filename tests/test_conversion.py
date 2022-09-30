@@ -62,7 +62,7 @@ def test_get_dataclass_spec_php(scenario: Scenario) -> None:
     with TemporaryDirectory() as tmpdir:
         f = FilePHP(Path(tmpdir) / 'dataclass.php')
         for dc in scenario.dataclasses:
-            f.contents.also(getDataclassSpec(dc, adv=adv, lang='php'))
+            f.contents.also(getDataclassSpec(dc, adv=adv, lang='php', hoistcontext=f.contents))
         f.contents.also(phpexpr(dedent(phpinit)))
         f.contents.also(phpexpr(f'assert($VAR instanceof {classname})'))
         f.contents.also(phpexpr(dedent(scenario.verify_php)))
