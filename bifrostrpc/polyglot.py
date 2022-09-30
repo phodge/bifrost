@@ -6,8 +6,8 @@ from paradox.expressions import (PanExpr, PanVar, PHPPrecedence, PyPrecedence,
 from paradox.generate.files import FileWriter
 from paradox.generate.statements import (CatchBlock2, ImportSpecPHP,
                                          ImportSpecPy, ImportSpecTS,
-                                         SimpleRaise, Statement, Statements,
-                                         TryCatchBlock)
+                                         SimpleRaise, Statement, TryCatchBlock)
+from paradox.interfaces import AcceptsStatements
 from paradox.typing import CrossType
 
 TYPE_ERROR_CLS = {
@@ -17,7 +17,7 @@ TYPE_ERROR_CLS = {
 
 
 def raiseTypeError(
-    context: Statements,
+    context: AcceptsStatements,
     *,
     pymsg: str = None,
     phpmsg: str = None,
