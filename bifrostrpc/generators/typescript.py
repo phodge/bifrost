@@ -77,7 +77,7 @@ def _generateAdvancedTypes(dest: FileTS, adv: Advanced) -> None:
 
     for dc in adv.getAllDataclasses():
         dest.contents.blank()
-        iface = InterfaceSpec(dc.__name__, tsexport=True, appendto=dest.contents)
+        iface = dest.contents.also(InterfaceSpec(dc.__name__, tsexport=True))
         for field in dataclasses.fields(dc):
             generated = _generateCrossType(getTypeSpec(field.type, adv), adv)
             iface.addProperty(field.name, generated)
@@ -89,12 +89,11 @@ def _generateWrappers(
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
 ) -> None:
-    cls = ClassSpec(
+    cls = dest.contents.also(ClassSpec(
         classname,
         isabstract=True,
         tsexport=True,
-        appendto=dest.contents,
-    )
+    ))
 
     # dispatch() function
     # FIXME: this should be protected, but we don't support that yet
