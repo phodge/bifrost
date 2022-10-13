@@ -85,8 +85,8 @@ class PolyglotRaise(Statement):
             if 'typescript' in exprs:
                 self._tsstmt = SimpleRaise(ctors['typescript'], expr=exprs['typescript'])
 
-    def writepy(self, w: FileWriter) -> None:
-        self._pystmt.writepy(w)
+    def writepy(self, w: FileWriter) -> int:
+        return self._pystmt.writepy(w)
 
     def writets(self, w: FileWriter) -> None:
         self._tsstmt.writets(w)

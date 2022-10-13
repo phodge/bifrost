@@ -10,10 +10,8 @@ def appendFailureModeClasses(dest: FileSpec) -> None:
         tsexport=True,
     ))
     af.addProperty('message', str, initarg=True)
-    dest.contents.also(ClassSpec(
+    c_ApiOutage = dest.contents.also(ClassSpec(
         'ApiOutage',
-        bases=['ApiFailure'],
-        tsbase='ApiFailure',
         tsexport=True,
         docstring=[
             'returned (not thrown) by api methods when a network error prevents',
@@ -21,10 +19,12 @@ def appendFailureModeClasses(dest: FileSpec) -> None:
             'might possibly succeed on a retry.',
         ],
     ))
-    dest.contents.also(ClassSpec(
+    c_ApiOutage.addPythonBaseClass('ApiFailure')
+    c_ApiOutage.setPHPParentClass('ApiFailure')
+    c_ApiOutage.setTypeScriptParentClass('ApiFailure')
+
+    c_ApiBroken = dest.contents.also(ClassSpec(
         'ApiBroken',
-        bases=['ApiFailure'],
-        tsbase='ApiFailure',
         tsexport=True,
         docstring=[
             'returned (not thrown) by api methods when a bug prevents the method',
@@ -32,3 +32,6 @@ def appendFailureModeClasses(dest: FileSpec) -> None:
             'result by retrying.',
         ]
     ))
+    c_ApiBroken.addPythonBaseClass('ApiFailure')
+    c_ApiBroken.setPHPParentClass('ApiFailure')
+    c_ApiBroken.setTypeScriptParentClass('ApiFailure')

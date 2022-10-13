@@ -5,8 +5,8 @@ from typing import List, Optional, Tuple, cast
 from paradox.expressions import pandict, tsexpr
 from paradox.generate.files import FileTS
 from paradox.generate.statements import ClassSpec, InterfaceSpec, RawTypescript
-from paradox.typing import (CrossAny, CrossCallable, CrossNewType,
-                            CrossTypeScriptOnlyType, dictof, unionof)
+from paradox.typing import (CrossAny, CrossCallable, CrossCustomType, dictof,
+                            unionof)
 
 from bifrostrpc.generators import Names
 from bifrostrpc.generators.common import appendFailureModeClasses
@@ -23,6 +23,8 @@ PRIMITIVES = {
     'int': 'number',
     'bool': 'boolean',
 }
+
+T_ApiFailure = CrossCustomType(typescript='ApiFailure')
 
 
 def generateClient(
@@ -99,7 +101,7 @@ def _generateWrappers(
     # FIXME: this should be protected, but we don't support that yet
     dispatchfn = cls.createMethod(
         'dispatch',
-        CrossTypeScriptOnlyType('Promise<ApiFailure | any>'),
+        CrossCustomType(typescript='Promise<ApiFailure | any>'),
         isabstract=True,
     )
     # the method that should be called
@@ -116,7 +118,7 @@ def _generateWrappers(
         retspec = funcspec.getReturnSpec()
         # TODO: need to ensure that FunctionSpec writes this out as a Promise<ApiFailure, ...> due
         # to the isasync=True kwarg
-        rettype = unionof(CrossNewType('ApiFailure'), _generateCrossType(retspec, adv))
+        rettype = unionof(T_ApiFailure, _generateCrossType(retspec, adv))
 
         fn = cls.createMethod(name, rettype, isasync=True)
         for argname, argspec in funcspec.getArgSpecs().items():

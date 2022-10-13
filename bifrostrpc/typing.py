@@ -3,21 +3,16 @@ import dataclasses
 import sys
 from dataclasses import is_dataclass
 from typing import (TYPE_CHECKING, Any, Callable, Dict, Iterable, List,
-                    NewType, Set, Tuple, Type, Union, cast, get_type_hints)
+                    Literal, NewType, Set, Tuple, Type, Union, cast,
+                    get_type_hints)
 
-from paradox.typing import (CrossBool, CrossDict, CrossList, CrossLiteral,
-                            CrossNewType, CrossNull, CrossNum, CrossStr,
+from paradox.typing import (CrossBool, CrossCustomType, CrossDict, CrossList,
+                            CrossLiteral, CrossNull, CrossNum, CrossStr,
                             CrossType, CrossUnion)
 
 if TYPE_CHECKING:
     from paradox.expressions import PanExpr
 
-
-try:
-    from typing import Literal  # type: ignore
-except ImportError:
-    # typing.Literal wasn't added until python 3.8
-    from typing_extensions import Literal
 
 ErrorList = List[str]
 ScalarTypes = Union[Type[str], Type[int], Type[bool]]
@@ -629,9 +624,8 @@ def _generateCrossType(
             return CrossNum()
         if spec.typeName == "bool":
             return CrossBool()
-        # a NewType.
-        # XXX: do we need to specify what the base is?
-        return CrossNewType(spec.typeName)
+
+        raise Exception("unreachable")
 
     if isinstance(spec, ListTypeSpec):
         return CrossList(_generateCrossType(spec.itemSpec, adv))
@@ -646,7 +640,12 @@ def _generateCrossType(
             raise Exception(
                 f'Cannot generate a python type for unknown dataclass {spec.class_.__name__}')
 
-        return CrossNewType(spec.class_.__name__)
+        return CrossCustomType(
+            python=spec.class_.__name__,
+            typescript=spec.class_.__name__,
+            phplang=spec.class_.__name__,
+            phpdoc=spec.class_.__name__,
+        )
 
     if isinstance(spec, UnionTypeSpec):
         return CrossUnion([

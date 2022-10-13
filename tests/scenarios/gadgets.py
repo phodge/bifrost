@@ -1,7 +1,12 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
-from . import Scenario
+from paradox.expressions import PanVar, isint
+from paradox.interfaces import AcceptsStatements
+from paradox.typing import CrossAny
+
+from . import (Scenario, assert_eq, assert_isdict, assert_isinstance,
+               assert_islist, assert_true)
 
 
 @dataclass
@@ -51,9 +56,9 @@ class Machine:
     subunits: List[Dict[str, Union[Gadget, Gizmo]]]
 
 
-GADGET0 = Scenario(
-    [Gadget, Button, Toggle, Lever],
-    {
+class GADGET0(Scenario):
+    dataclasses = [Gadget, Button, Toggle, Lever]
+    obj = {
         "__dataclass__": "Gadget",
         "name": "Digitizer 2000",
         "powerActivator": None,
@@ -62,63 +67,61 @@ GADGET0 = Scenario(
             {"__dataclass__": "Toggle", "label": "Compression"},
             {"__dataclass__": "Button", "label": "Eject"},
         ],
-    },
-    verify_php='''
-        assert($VAR->name === "Digitizer 2000");
-        assert($VAR->powerActivator === null);
-        assert(is_array($VAR->controls));
-        assert(count($VAR->controls) === 3);
-        assert($VAR->controls[0] instanceof Lever);
-        assert($VAR->controls[0]->label === "Input Source");
-        assert($VAR->controls[1] instanceof Toggle);
-        assert($VAR->controls[1]->label === "Compression");
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name', CrossAny()), "Digitizer 2000")
+        assert_eq(context, v.getprop('powerActivator', CrossAny()), None)
+
+        p_controls = v.getprop('controls', CrossAny())
+        assert_islist(context, p_controls, size=3)
+        assert_isinstance(context, p_controls.getindex(0), 'Lever')
+        assert_isinstance(context, p_controls.getindex(1), 'Toggle')
+        assert_isinstance(context, p_controls.getindex(2), 'Button')
+        assert_eq(context, p_controls.getindex(0).getprop('label', CrossAny()), "Input Source")
+        assert_eq(context, p_controls.getindex(1).getprop('label', CrossAny()), "Compression")
+        assert_eq(context, p_controls.getindex(2).getprop('label', CrossAny()), "Eject")
 
 
-GADGET1 = Scenario(
-    [Gadget, Button, Toggle, Lever],
-    {
+class GADGET1(Scenario):
+    dataclasses = [Gadget, Button, Toggle, Lever]
+    obj = {
         "__dataclass__": "Gadget",
         "name": "Ultimate Power Box",
         "powerActivator": {"__dataclass__": "Toggle", "label": "POWER!"},
         "controls": [],
-    },
-    verify_php='''
-        assert($VAR->name === "Ultimate Power Box");
-        assert($VAR->powerActivator instanceof Toggle);
-        assert($VAR->powerActivator->label === "POWER!");
-        assert(is_array($VAR->controls));
-        assert(count($VAR->controls) === 0);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Ultimate Power Box")
+        assert_isinstance(context, v.getprop('powerActivator'), 'Toggle')
+        assert_eq(context, v.getprop('powerActivator').getprop('label'), "POWER!")
+        assert_islist(context, v.getprop('controls'), size=0)
 
 
-GIZMO0 = Scenario(
-    [Gizmo, Button, Toggle, Lever],
-    {
+class GIZMO0(Scenario):
+    dataclasses = [Gizmo, Button, Toggle, Lever]
+    obj = {
         "__dataclass__": "Gizmo",
         "name": "Colour Doohicky",
         "affordances": [
             {"__dataclass__": "Toggle", "label": "Red"},
             {"__dataclass__": "Toggle", "label": "Blue"},
         ],
-    },
-    verify_php='''
-        assert($VAR->name === "Colour Doohicky");
-        assert(is_array($VAR->affordances));
-        assert(count($VAR->affordances) === 2);
-        assert($VAR->affordances[0] instanceof Toggle);
-        assert($VAR->affordances[0]->label === "Red");
-        assert($VAR->affordances[1] instanceof Toggle);
-        assert($VAR->affordances[1]->label === "Blue");
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Colour Doohicky")
+        assert_islist(context, v.getprop('affordances'), size=2)
+        assert_isinstance(context, v.getprop("affordances").getindex(0), 'Toggle')
+        assert_isinstance(context, v.getprop("affordances").getindex(1), 'Toggle')
+        assert_eq(context, v.getprop('affordances').getindex(0).getprop('label'), "Red")
+        assert_eq(context, v.getprop('affordances').getindex(1).getprop('label'), "Blue")
 
 
-WIDGET0 = Scenario(
-    [Widget, Toggle, Button],
-    {
+class WIDGET0(Scenario):
+    dataclasses = [Widget, Toggle, Button]
+    obj = {
         "__dataclass__": "Widget",
         "name": "Uberwidget",
         "inputs": [
@@ -126,115 +129,111 @@ WIDGET0 = Scenario(
             {"__dataclass__": "Toggle", "label": "Blue"},
             {"__dataclass__": "Toggle", "label": "Green"},
         ],
-    },
-    verify_php='''
-        assert($VAR->name === "Uberwidget");
-        assert(is_array($VAR->inputs));
-        assert(count($VAR->inputs) === 3);
-        assert($VAR->inputs[0] instanceof Toggle);
-        assert($VAR->inputs[1] instanceof Toggle);
-        assert($VAR->inputs[2] instanceof Toggle);
-        assert($VAR->inputs[0]->label === "Red");
-        assert($VAR->inputs[1]->label === "Blue");
-        assert($VAR->inputs[2]->label === "Green");
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Uberwidget")
+        assert_islist(context, v.getprop('inputs'), size=3)
+        assert_isinstance(context, v.getprop('inputs').getindex(0), 'Toggle')
+        assert_isinstance(context, v.getprop('inputs').getindex(1), 'Toggle')
+        assert_isinstance(context, v.getprop('inputs').getindex(2), 'Toggle')
+        assert_eq(context, v.getprop('inputs').getindex(0).getprop('label'), "Red")
+        assert_eq(context, v.getprop('inputs').getindex(1).getprop('label'), "Blue")
+        assert_eq(context, v.getprop('inputs').getindex(2).getprop('label'), "Green")
 
 
-WIDGET1 = Scenario(
-    [Widget, Toggle, Button],
-    {
+class WIDGET1(Scenario):
+    dataclasses = [Widget, Toggle, Button]
+    obj = {
         "__dataclass__": "Widget",
         "name": "Uberwidget",
         "inputs": [55, 66, 77, 99],
-    },
-    verify_php='''
-        assert($VAR->name === "Uberwidget");
-        assert(is_array($VAR->inputs));
-        assert(count($VAR->inputs) === 4);
-        assert(is_int($VAR->inputs[0]));
-        assert(is_int($VAR->inputs[1]));
-        assert(is_int($VAR->inputs[2]));
-        assert(is_int($VAR->inputs[3]));
-        assert($VAR->inputs[0] === 55);
-        assert($VAR->inputs[1] === 66);
-        assert($VAR->inputs[2] === 77);
-        assert($VAR->inputs[3] === 99);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Uberwidget")
+        assert_islist(context, v.getprop('inputs'), size=4)
+        assert_true(context, isint(v.getprop('inputs').getindex(0)))
+        assert_true(context, isint(v.getprop('inputs').getindex(1)))
+        assert_true(context, isint(v.getprop('inputs').getindex(2)))
+        assert_true(context, isint(v.getprop('inputs').getindex(3)))
+        assert_eq(context, v.getprop('inputs').getindex(0), 55)
+        assert_eq(context, v.getprop('inputs').getindex(1), 66)
+        assert_eq(context, v.getprop('inputs').getindex(2), 77)
+        assert_eq(context, v.getprop('inputs').getindex(3), 99)
 
 
-DEVICE0 = Scenario(
-    [Device, Button, Toggle],
-    {
+class DEVICE0(Scenario):
+    dataclasses = [Device, Button, Toggle]
+    obj = {
         "__dataclass__": "Device",
         "name": "Device Zero",
-        "interfaces": [
-            {"__dataclass__": "Button", "label": "On"},
-            {"__dataclass__": "Button", "label": "Off"},
-        ],
+        "interfaces": {
+            'on': {"__dataclass__": "Button", "label": "On"},
+            'off': {"__dataclass__": "Button", "label": "Off"},
+        },
         "settings": {
             "dehumidifier": {"__dataclass__": "Button", "label": "Active"},
             "auto-adjust": {"__dataclass__": "Toggle", "label": "Auto"},
         },
-    },
-    verify_php='''
-        assert($VAR->name === "Device Zero");
-        assert(is_array($VAR->interfaces));
-        assert(count($VAR->interfaces) === 2);
-        assert($VAR->interfaces[0] instanceof Button);
-        assert($VAR->interfaces[1] instanceof Button);
-        assert($VAR->interfaces[0]->label === "On");
-        assert($VAR->interfaces[1]->label === "Off");
-        assert(is_array($VAR->settings));
-        assert(count($VAR->settings) === 2);
-        assert($VAR->settings["dehumidifier"] instanceof Button);
-        assert($VAR->settings["auto-adjust"]  instanceof Toggle);
-        assert($VAR->settings["dehumidifier"]->label === "Active");
-        assert($VAR->settings["auto-adjust"]->label === "Auto");
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name', CrossAny()), "Device Zero")
+
+        p_interfaces = v.getprop('interfaces', CrossAny())
+        assert_isdict(context, p_interfaces, size=2)
+        i_on = p_interfaces.getitem('on')
+        i_off = p_interfaces.getitem('off')
+        assert_isinstance(context, i_on, 'Button')
+        assert_isinstance(context, i_off, 'Button')
+        assert_eq(context, i_on.getprop('label', CrossAny()), 'On')
+        assert_eq(context, i_off.getprop('label', CrossAny()), 'Off')
+
+        p_settings = v.getprop('settings', CrossAny())
+        assert_isdict(context, p_settings, size=2)
+        i_dehumid = p_settings.getitem("dehumidifier")
+        i_autoadj = p_settings.getitem("auto-adjust")
+        assert_isinstance(context, i_dehumid, 'Button')
+        assert_isinstance(context, i_autoadj, 'Toggle')
+        assert_eq(context, i_dehumid.getprop('label', CrossAny()), 'Active')
+        assert_eq(context, i_autoadj.getprop('label', CrossAny()), 'Auto')
 
 
-DEVICE1 = Scenario(
-    [Device, Button, Toggle],
-    {
+class DEVICE1(Scenario):
+    dataclasses = [Device, Button, Toggle]
+    obj = {
         "__dataclass__": "Device",
         "name": "The One Device",
         "interfaces": {},
         "settings": {},
-    },
-    verify_php='''
-        assert($VAR->name === "The One Device");
-        assert(is_array($VAR->interfaces));
-        assert(count($VAR->interfaces) === 0);
-        assert(is_array($VAR->settings));
-        assert(count($VAR->settings) === 0);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name', CrossAny()), "The One Device")
+        assert_isdict(context, v.getprop('interfaces', CrossAny()), size=0)
+        assert_isdict(context, v.getprop('settings', CrossAny()), size=0)
 
 
-DEVICE2 = Scenario(
-    [Device, Button, Toggle],
-    {
+class DEVICE2(Scenario):
+    dataclasses = [Device, Button, Toggle]
+    obj = {
         "__dataclass__": "Device",
         "name": "Device, Too",
         "interfaces": {},
         # NOTE: this is where we demonstrate that an Optional dataclass property can be safely
         # omitted
-    },
-    verify_php='''
-        assert($VAR->name === "Device, Too");
-        assert(is_array($VAR->interfaces));
-        assert(count($VAR->interfaces) === 0);
-        assert($VAR->settings === null);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name', CrossAny()), "Device, Too")
+        assert_isdict(context, v.getprop('interfaces', CrossAny()), size=0)
+        assert_eq(context, v.getprop('settings', CrossAny()), None)
 
 
-MACHINE0 = Scenario(
-    [Machine, Gadget, Gizmo, Toggle, Button, Lever],
-    {
+class MACHINE0(Scenario):
+    dataclasses = [Machine, Gadget, Gizmo, Toggle, Button, Lever]
+    obj = {
         "__dataclass__": "Machine",
         "name": "Deus Ex Machina",
         "subunits": [
@@ -273,87 +272,80 @@ MACHINE0 = Scenario(
                 },
             },
         ],
-    },
-    verify_php='''
-        assert($VAR->name === "Deus Ex Machina");
-        assert(is_array($VAR->subunits));
-        assert(count($VAR->subunits) === 2);
-        assert(is_array($VAR->subunits[0]));
-        assert(count($VAR->subunits[0]) === 2);
-        assert(is_array($VAR->subunits[1]));
-        assert(count($VAR->subunits[1]) === 2);
-        $G001 = $VAR->subunits[0]["G001"];
-        $G002 = $VAR->subunits[0]["G002"];
-        $J003 = $VAR->subunits[1]["J003"];
-        $J004 = $VAR->subunits[1]["J004"];
+    }
 
-        assert($G001 instanceof Gadget);
-        assert($G001->name === "G001");
-        assert(count($G001->controls) === 2);
-        assert($G001->controls[0] instanceof Button);
-        assert($G001->controls[0]->label === "Alpha");
-        assert($G001->controls[1] instanceof Button);
-        assert($G001->controls[1]->label === "Beta");
-        assert($G001->powerActivator === null);
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name', CrossAny()), "Deus Ex Machina")
+        p_subunits = v.getprop('subunits', CrossAny())
+        assert_islist(context, p_subunits, size=2)
+        sub0 = p_subunits.getindex(0)
+        sub1 = p_subunits.getindex(1)
+        assert_isdict(context, sub0, size=2)
+        assert_isdict(context, sub1, size=2)
+        G001 = sub0.getitem("G001")
+        G002 = sub0.getitem("G002")
+        J003 = sub1.getitem("J003")
+        J004 = sub1.getitem("J004")
 
-        assert($G002 instanceof Gizmo);
-        assert($G002->name === "G002");
-        assert(count($G002->affordances) === 3);
-        assert($G002->affordances[0] instanceof Toggle);
-        assert($G002->affordances[0]->label === "Gamma");
-        assert($G002->affordances[1] instanceof Toggle);
-        assert($G002->affordances[1]->label === "Delta");
-        assert($G002->affordances[2] instanceof Toggle);
-        assert($G002->affordances[2]->label === "Epsilon");
+        assert_isinstance(context, G001, 'Gadget')
+        assert_eq(context, G001.getprop('name', CrossAny()), 'G001')
+        G001_controls = G001.getprop('controls', CrossAny())
+        assert_islist(context, G001_controls, size=2)
+        assert_isinstance(context, G001_controls.getindex(0), 'Button')
+        assert_isinstance(context, G001_controls.getindex(1), 'Button')
+        assert_eq(context, G001_controls.getindex(0).getprop('label', CrossAny()), "Alpha")
+        assert_eq(context, G001_controls.getindex(1).getprop('label', CrossAny()), "Beta")
+        assert_eq(context, G001.getprop('powerActivator', CrossAny()), None)
 
-        assert($J003 instanceof Gizmo);
-        assert($J003->name === "J003");
-        assert(count($J003->affordances) === 0);
+        assert_isinstance(context, G002, 'Gizmo')
+        assert_eq(context, G002.getprop('name'), "G002")
+        assert_islist(context, G002.getprop('affordances'), size=3)
+        assert_isinstance(context, G002.getprop('affordances').getindex(0), 'Toggle')
+        assert_isinstance(context, G002.getprop('affordances').getindex(1), 'Toggle')
+        assert_isinstance(context, G002.getprop('affordances').getindex(2), 'Toggle')
+        assert_eq(context, G002.getprop('affordances').getindex(0).getprop('label'), "Gamma")
+        assert_eq(context, G002.getprop('affordances').getindex(1).getprop('label'), "Delta")
+        assert_eq(context, G002.getprop('affordances').getindex(2).getprop('label'), "Epsilon")
 
-        assert($J004 instanceof Gadget);
-        assert($J004->name === "J004");
-        assert(count($J004->controls) === 1);
-        assert($J004->controls[0] instanceof Lever);
-        assert($J004->controls[0]->label === "Zeta");
-        assert($J004->powerActivator instanceof Button);
-        assert($J004->powerActivator->label === "Eta");
-    ''',
-)
+        assert_isinstance(context, J003, 'Gizmo')
+        assert_eq(context, J003.getprop('name', CrossAny()), "J003")
+        assert_islist(context, J003.getprop('affordances', CrossAny()), size=0)
+
+        assert_isinstance(context, J004, 'Gadget')
+        assert_eq(context, J004.getprop('name'), "J004")
+        assert_islist(context, J004.getprop('controls'), size=1)
+        c0 = J004.getprop('controls').getindex(0)
+        assert_isinstance(context, c0, 'Lever')
+        assert_eq(context, c0.getprop('label'), "Zeta")
+        assert_isinstance(context, J004.getprop('powerActivator'), 'Button')
+        assert_eq(context, J004.getprop('powerActivator').getprop('label'), "Eta")
 
 
-MACHINE1 = Scenario(
-    [Machine, Gadget, Gizmo, Toggle, Button, Lever],
-    {
+class MACHINE1(Scenario):
+    dataclasses = [Machine, Gadget, Gizmo, Toggle, Button, Lever]
+    obj = {
         "__dataclass__": "Machine",
         "name": "Rage Against the Machine",
         "subunits": [{}, {}, {}, {}],
-    },
-    verify_php='''
-        assert($VAR->name === "Rage Against the Machine");
-        assert(is_array($VAR->subunits));
-        assert(count($VAR->subunits) === 4);
-        assert(is_array($VAR->subunits[0]));
-        assert(count($VAR->subunits[0]) === 0);
-        assert(is_array($VAR->subunits[1]));
-        assert(count($VAR->subunits[1]) === 0);
-        assert(is_array($VAR->subunits[2]));
-        assert(count($VAR->subunits[2]) === 0);
-        assert(is_array($VAR->subunits[3]));
-        assert(count($VAR->subunits[3]) === 0);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Rage Against the Machine")
+        assert_islist(context, v.getprop('subunits'), size=4)
+        assert_isdict(context, v.getprop('subunits').getindex(0), size=0)
+        assert_isdict(context, v.getprop('subunits').getindex(1), size=0)
+        assert_isdict(context, v.getprop('subunits').getindex(2), size=0)
+        assert_isdict(context, v.getprop('subunits').getindex(3), size=0)
 
 
-MACHINE2 = Scenario(
-    [Machine, Gadget, Gizmo, Toggle, Button, Lever],
-    {
+class MACHINE2(Scenario):
+    dataclasses = [Machine, Gadget, Gizmo, Toggle, Button, Lever]
+    obj = {
         "__dataclass__": "Machine",
         "name": "Null Machine",
         "subunits": [],
-    },
-    verify_php='''
-        assert($VAR->name === "Null Machine");
-        assert(is_array($VAR->subunits));
-        assert(count($VAR->subunits) === 0);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Null Machine")
+        assert_islist(context, v.getprop('subunits'), size=0)

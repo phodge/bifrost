@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from typing import Dict, List
 
-from . import Scenario
+from paradox.expressions import PanVar
+from paradox.interfaces import AcceptsStatements
+from paradox.typing import CrossAny
+
+from . import Scenario, assert_eq, assert_isdict, assert_islist
 
 
 @dataclass
@@ -12,45 +16,43 @@ class User:
     prefs: Dict[str, str]
 
 
-USER0 = Scenario(
-    [User],
-    {
+class USER0(Scenario):
+    dataclasses = [User]
+    obj = {
         "__dataclass__": "User",
         "userId": 55,
         "userName": "Fred",
         "colours": [],
         "prefs": {},
-    },
-    verify_php='''
-        assert($VAR->userId === 55);
-        assert($VAR->userName === "Fred");
-        assert(is_array($VAR->colours));
-        assert(count($VAR->colours) === 0);
-        assert(is_array($VAR->prefs));
-        assert(count($VAR->prefs) === 0);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('userId', CrossAny()), 55)
+        assert_eq(context, v.getprop('userName', CrossAny()), "Fred")
+
+        assert_islist(context, v.getprop('colours', CrossAny()), size=0)
+        assert_isdict(context, v.getprop('prefs', CrossAny()), size=0)
 
 
-USER1 = Scenario(
-    [User],
-    {
+class USER1(Scenario):
+    dataclasses = [User]
+    obj = {
         "__dataclass__": "User",
         "userId": 66,
         "userName": "Nigel",
         "colours": ["red", "blue"],
         "prefs": {"option1": "value1", "option2": "value2"},
-    },
-    verify_php='''
-        assert($VAR->userId === 66);
-        assert($VAR->userName === "Nigel");
-        assert(is_array($VAR->colours));
-        assert(count($VAR->colours) === 2);
-        assert($VAR->colours[0] === 'red');
-        assert($VAR->colours[1] === 'blue');
-        assert(is_array($VAR->prefs));
-        assert(count($VAR->prefs) === 2);
-        assert($VAR->prefs['option1'] === 'value1');
-        assert($VAR->prefs['option2'] === 'value2');
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('userId', CrossAny()), 66)
+        assert_eq(context, v.getprop('userName', CrossAny()), 'Nigel')
+        p_colours = v.getprop('colours', CrossAny())
+        assert_islist(context, p_colours, size=2)
+        assert_eq(context, p_colours.getindex(0), 'red')
+        assert_eq(context, p_colours.getindex(1), 'blue')
+
+        p_prefs = v.getprop('prefs', CrossAny())
+        assert_isdict(context, p_prefs, size=2)
+        assert_eq(context, p_prefs.getitem('option1'), 'value1')
+        assert_eq(context, p_prefs.getitem('option2'), 'value2')

@@ -1,18 +1,11 @@
-from typing import Any, Callable, Dict, List, NewType, Optional, Type, Union
+from typing import (Any, Callable, Dict, List, Literal, NewType, Optional,
+                    Type, Union)
 
 from pytest import raises
 
-try:
-    from typing import Literal  # type: ignore
-except ImportError:
-    # Literal wasn't part of stdlib until 3.8
-    from typing_extensions import Literal
-
 
 def test_get_int_type_spec() -> None:
-    from bifrostrpc.typing import Advanced
-    from bifrostrpc.typing import getTypeSpec
-    from bifrostrpc.typing import ScalarTypeSpec
+    from bifrostrpc.typing import Advanced, ScalarTypeSpec, getTypeSpec
 
     adv = Advanced()
 
@@ -42,9 +35,7 @@ def test_get_int_type_spec() -> None:
 
 
 def test_get_str_type_spec() -> None:
-    from bifrostrpc.typing import Advanced
-    from bifrostrpc.typing import getTypeSpec
-    from bifrostrpc.typing import ScalarTypeSpec
+    from bifrostrpc.typing import Advanced, ScalarTypeSpec, getTypeSpec
 
     adv = Advanced()
 
@@ -75,10 +66,8 @@ def test_get_str_type_spec() -> None:
 
 def test_get_List_type_spec() -> None:
     from bifrostrpc import TypeNotSupportedError
-    from bifrostrpc.typing import Advanced
-    from bifrostrpc.typing import ListTypeSpec
-    from bifrostrpc.typing import ScalarTypeSpec
-    from bifrostrpc.typing import getTypeSpec
+    from bifrostrpc.typing import (Advanced, ListTypeSpec, ScalarTypeSpec,
+                                   getTypeSpec)
 
     # test handling of a simple List[int]
     ts = getTypeSpec(List[int], Advanced())
@@ -122,10 +111,8 @@ def test_get_List_type_spec() -> None:
 
 def test_get_Dict_type_spec() -> None:
     from bifrostrpc import TypeNotSupportedError
-    from bifrostrpc.typing import Advanced
-    from bifrostrpc.typing import DictTypeSpec
-    from bifrostrpc.typing import ScalarTypeSpec
-    from bifrostrpc.typing import getTypeSpec
+    from bifrostrpc.typing import (Advanced, DictTypeSpec, ScalarTypeSpec,
+                                   getTypeSpec)
 
     # test handling of a simple Dict[str, int]
     ts = getTypeSpec(Dict[str, int], Advanced())
@@ -264,8 +251,7 @@ def _assert_union_variants(
 
 
 def test_get_Union_type_spec() -> None:
-    from bifrostrpc.typing import Advanced
-    from bifrostrpc.typing import getTypeSpec
+    from bifrostrpc.typing import Advanced, getTypeSpec
 
     # test handling of a simple Union[str, int, None]
     _assert_union_variants(
@@ -328,8 +314,7 @@ def test_Union_type_spec_does_not_collapse_int_bool() -> None:
 
     See https://stackoverflow.com/questions/60154326/unable-to-create-unionbool-int-type
     """
-    from bifrostrpc.typing import Advanced
-    from bifrostrpc.typing import getTypeSpec
+    from bifrostrpc.typing import Advanced, getTypeSpec
 
     # test handling of a simple Union[int, bool]
     _assert_union_variants(
@@ -340,9 +325,7 @@ def test_Union_type_spec_does_not_collapse_int_bool() -> None:
 
 
 def test_get_Literal_type_spec() -> None:
-    from bifrostrpc.typing import Advanced
-    from bifrostrpc.typing import getTypeSpec
-    from bifrostrpc.typing import LiteralTypeSpec
+    from bifrostrpc.typing import Advanced, LiteralTypeSpec, getTypeSpec
 
     # need type: ignore here because mypy can't work out what Literal is due to
     # import fallback mechanism above
