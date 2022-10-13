@@ -1,7 +1,6 @@
-from typing import Optional, Type, Union
+from typing import Literal, Optional, Type, Union
 
 import pytest
-from typing_extensions import Literal
 
 from bifrostrpc.typing import (Advanced, LiteralTypeSpec, NullTypeSpec,
                                ScalarTypeSpec, UnionTypeSpec, getTypeSpec)

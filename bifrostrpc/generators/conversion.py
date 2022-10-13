@@ -1,6 +1,6 @@
 import dataclasses
 import uuid
-from typing import Any, List, Optional, Type
+from typing import Any, List, Literal, Optional, Type
 
 from paradox.expressions import (PanCall, PanDict, PanExpr, PanList, PanVar,
                                  and_, exacteq_, isbool, isdict, isint, islist,
@@ -9,8 +9,7 @@ from paradox.generate.statements import (AssignmentStatement, ClassSpec,
                                          ConditionalBlock, FunctionSpec,
                                          Statement, Statements)
 from paradox.interfaces import AcceptsStatements
-from paradox.typing import CrossAny, CrossNewType, CrossStr
-from typing_extensions import Literal
+from paradox.typing import CrossAny, CrossCustomType, CrossStr
 
 from bifrostrpc.generators import Names
 from bifrostrpc.polyglot import raiseTypeError, withCatchTypeError
@@ -212,12 +211,14 @@ def _getTypeNoMatchExpr(
 
     if isinstance(spec, ListTypeSpec):
         if lang == 'python' and isinstance(spec.itemSpec, NullTypeSpec):
-            return pyexpr(f'any(x is not None for x in {var_or_prop})')
+            return pyexpr(f'any(x is not None for x in {var_or_prop.getPyExpr()[0]})')
 
         itemSpec = spec.itemSpec
         if lang == 'python' and isinstance(itemSpec, ScalarTypeSpec):
             scalarName = itemSpec.scalarType.__name__
-            return pyexpr(f'not all(isinstance(x, {scalarName}) for x in {var_or_prop})')
+            return pyexpr(
+                f'not all(isinstance(x, {scalarName}) for x in {var_or_prop.getPyExpr()[0]})',
+            )
 
         # not possible
         return None
@@ -345,7 +346,12 @@ def getConverterBlock(
                     lang=lang,
                 )
             except ConverterNotPossible:
-                v_item_converted = names.getNewName2(var_or_prop.rawname, 'item_converted', True)
+                v_item_converted = names.getNewName2(
+                    var_or_prop.rawname,
+                    'item_converted',
+                    True,
+                    type=CrossAny(),
+                )
                 converterblock = getConverterBlock(
                     v_item,
                     v_item_converted,
@@ -378,6 +384,7 @@ def getConverterBlock(
         # add conversions for the items - we know filter blocks aren't possible because if they
         # were, we wouldn't be using getConverterBlock on this DictTypeSpec
         valuespec = spec.valueSpec
+        valuetype = _generateCrossType(valuespec, adv=adv)
         keyspec = spec.keySpec
         assert isinstance(keyspec, ScalarTypeSpec)
         assert keyspec.scalarType is str
@@ -395,7 +402,12 @@ def getConverterBlock(
                     lang=lang,
                 )
             except ConverterNotPossible:
-                v_val_converted = names.getNewName2(var_or_prop.rawname, 'val_converted', True)
+                v_val_converted = names.getNewName2(
+                    var_or_prop.rawname,
+                    'val_converted',
+                    True,
+                    type=valuetype,
+                )
                 converterblock = getConverterBlock(
                     v_val,
                     v_val_converted,
@@ -626,7 +638,7 @@ def getDataclassSpec(
     hoistcontext: AcceptsStatements,
 ) -> ClassSpec:
     name = dc.__name__
-    cls = ClassSpec(name, isdataclass=True)
+    cls = ClassSpec(name, pydataclass=True)
 
     for field in dataclasses.fields(dc):
         fieldspec = getTypeSpec(field.type, adv)
@@ -638,7 +650,11 @@ def getDataclassSpec(
         )
 
     # the dataclass needs a deserialization method, too
-    fromdict = cls.createMethod('fromDict', CrossNewType(name, quoted=True), isstaticmethod=True)
+    fromdict = cls.createMethod(
+        'fromDict',
+        CrossCustomType(python=name, typescript=name, phplang=name, phpdoc=name),
+        isstaticmethod=True,
+    )
     v_data = fromdict.addPositionalArg('data', CrossAny())
     fromdict.addPositionalArg('label', str)
 
@@ -668,26 +684,9 @@ def getDataclassSpec(
 
     # validate each property item
     for field in dataclasses.fields(dc):
-        # use a try/catch to assign the dict key to a local variable before we filter/convert it.
-        # This allows us to trap the KeyError quickly and explicitly
         fname = field.name
         v_var = names.getNewName2('', fname, True, type=CrossAny())
-        if lang == 'python':
-            with fromdict.withTryBlock() as tryblock:
-                tryblock.alsoDeclare(v_var, None, v_data.getitem(fname))
-                with tryblock.withCatchBlock('KeyError') as caught:
-                    # Tell pylint not to worry about the use of %-string formatting
-                    # here - using an f-string to generate an f-string is too error
-                    # prone:
-                    # pylint: disable=C0209
-                    raiseTypeError(
-                        caught,
-                        pyexpr=pyexpr('f"{label}[\'%s\'] is missing"' % fname),
-                        phpexpr=phpexpr('"{$label}[\'%s\'] is missing or null"' % fname),
-                    )
-        else:
-            # other less-safe langauges (lookin at you, PHP)
-            fromdict.alsoDeclare(v_var, None, v_data.getitem(fname, pan(None)))
+        fromdict.alsoDeclare(v_var, None, v_data.getitem(fname, pan(None)))
 
         fieldspec = getTypeSpec(field.type, adv)
 
@@ -702,7 +701,7 @@ def getDataclassSpec(
             ))
             buildargs.append(v_var)
         except FilterNotPossible:
-            v_converted = names.getNewName2(v_var.rawname, 'converted', True)
+            v_converted = names.getNewName2(v_var.rawname, 'converted', True, type=CrossAny())
             fromdict.also(getConverterBlock(
                 v_var,
                 v_converted,

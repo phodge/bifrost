@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
 
-from . import Scenario
+from paradox.expressions import PanVar
+from paradox.interfaces import AcceptsStatements
+
+from . import (Scenario, assert_eq, assert_isdict, assert_isinstance,
+               assert_islist)
 
 
 @dataclass
@@ -23,9 +27,9 @@ class Traveller:
     holidays: Dict[str, List[Union[City, str]]]
 
 
-TRAVELLER0 = Scenario(
-    [Traveller, City],
-    {
+class TRAVELLER0(Scenario):
+    dataclasses = [Traveller, City]
+    obj = {
         "__dataclass__": "Traveller",
         "travellerId": "fred@example.com",
         "birthCity": {"__dataclass__": "City", "cityName": "Sydney", "countryName": "Australia"},
@@ -56,50 +60,51 @@ TRAVELLER0 = Scenario(
                 {"__dataclass__": "City", "cityName": "Rome", "countryName": "Italy"},
             ],
         },
-    },
-    verify_php='''
-        assert($VAR->travellerId === "fred@example.com");
-        assert($VAR->birthCity instanceof City);
-        assert($VAR->birthCity->cityName === "Sydney");
-        assert($VAR->birthCity->countryName === "Australia");
-        assert($VAR->marriageCity instanceof City);
-        assert(is_array($VAR->citiesVisited));
-        assert(count($VAR->citiesVisited) === 3);
-        assert($VAR->citiesVisited[0] instanceof City);
-        assert($VAR->citiesVisited[0]->cityName === "Cairns");
-        assert($VAR->citiesVisited[0]->countryName === "AUS");
-        assert($VAR->citiesVisited[1] === "Los Angeles");
-        assert($VAR->citiesVisited[2] instanceof City);
-        assert($VAR->citiesVisited[2]->cityName === "Perth");
-        assert($VAR->citiesVisited[2]->countryName === "Australia");
-        assert(is_array($VAR->countriesVisited));
-        assert(count($VAR->countriesVisited) === 2);
-        assert(is_array($VAR->countriesVisited["USA"]));
-        assert(count($VAR->countriesVisited["USA"]) === 3);
-        assert($VAR->countriesVisited["USA"][0] === 2003);
-        assert($VAR->countriesVisited["USA"][1] === 2008);
-        assert($VAR->countriesVisited["USA"][2] === 2011);
-        assert(is_array($VAR->countriesVisited["France"]));
-        assert(count($VAR->countriesVisited["France"]) === 0);
-        assert(is_array($VAR->holidays));
-        assert(count($VAR->holidays) === 3);
-        assert(is_array($VAR->holidays["2013"]) && count($VAR->holidays["2013"]) === 2);
-        assert(is_array($VAR->holidays["2014"]) && count($VAR->holidays["2014"]) === 0);
-        assert(is_array($VAR->holidays["2015"]) && count($VAR->holidays["2015"]) === 3);
-        assert($VAR->holidays["2013"][0] === "Los Angeles");
-        assert($VAR->holidays["2013"][1] === "Las Vegas");
-        assert($VAR->holidays["2015"][0] instanceof City);
-        assert($VAR->holidays["2015"][0]->cityName === "Paris");
-        assert($VAR->holidays["2015"][1] === "New York");
-        assert($VAR->holidays["2015"][2] instanceof City);
-        assert($VAR->holidays["2015"][2]->cityName === "Rome");
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('travellerId'), "fred@example.com")
+        bc = v.getprop('birthCity')
+        assert_isinstance(context, bc, 'City')
+        assert_eq(context, bc.getprop('cityName'), "Sydney")
+        assert_eq(context, bc.getprop('countryName'), "Australia")
+        assert_isinstance(context, v.getprop('marriageCity'), 'City')
+
+        cv = v.getprop('citiesVisited')
+        assert_islist(context, cv, size=3)
+        assert_isinstance(context, v.getprop('citiesVisited').getindex(0), 'City')
+        assert_eq(context, cv.getindex(0).getprop('cityName'), "Cairns")
+        assert_eq(context, cv.getindex(0).getprop('countryName'), "AUS")
+        assert_eq(context, cv.getindex(1), "Los Angeles")
+        assert_isinstance(context, v.getprop('citiesVisited').getindex(2), 'City')
+        assert_eq(context, cv.getindex(2).getprop('cityName'), "Perth")
+        assert_eq(context, cv.getindex(2).getprop('countryName'), "Australia")
+
+        cv = v.getprop('countriesVisited')
+        assert_isdict(context, cv, size=2)
+        assert_islist(context, cv.getitem('USA'), size=3)
+        assert_eq(context, cv.getitem("USA").getindex(0), 2003)
+        assert_eq(context, cv.getitem("USA").getindex(1), 2008)
+        assert_eq(context, cv.getitem("USA").getindex(2), 2011)
+        assert_islist(context, cv.getitem('France'), size=0)
+
+        hol = v.getprop('holidays')
+        assert_isdict(context, hol, size=3)
+        assert_islist(context, hol.getitem("2013"), size=2)
+        assert_islist(context, hol.getitem("2014"), size=0)
+        assert_islist(context, hol.getitem("2015"), size=3)
+        assert_eq(context, hol.getitem("2013").getindex(0), "Los Angeles")
+        assert_eq(context, hol.getitem("2013").getindex(1), "Las Vegas")
+        assert_isinstance(context, hol.getitem("2015").getindex(0), 'City')
+        assert_eq(context, hol.getitem("2015").getindex(0).getprop('cityName'), "Paris")
+        assert_eq(context, hol.getitem("2015").getindex(1), "New York")
+        assert_isinstance(context, hol.getitem("2015").getindex(2), 'City')
+        assert_eq(context, hol.getitem("2015").getindex(2).getprop('cityName'), "Rome")
 
 
-TRAVELLER1 = Scenario(
-    [Traveller, City],
-    {
+class TRAVELLER1(Scenario):
+    dataclasses = [Traveller, City]
+    obj = {
         "__dataclass__": "Traveller",
         "travellerId": 54321,
         "birthCity": {"__dataclass__": "City", "cityName": "Barcelona", "countryName": "Spain"},
@@ -107,18 +112,14 @@ TRAVELLER1 = Scenario(
         "citiesVisited": [],
         "countriesVisited": {},
         "holidays": {},
-    },
-    verify_php='''
-        assert($VAR->travellerId === 54321);
-        assert($VAR->birthCity instanceof City);
-        assert($VAR->birthCity->cityName === "Barcelona");
-        assert($VAR->birthCity->countryName === "Spain");
-        assert($VAR->marriageCity === null);
-        assert(is_array($VAR->citiesVisited));
-        assert(count($VAR->citiesVisited) === 0);
-        assert(is_array($VAR->countriesVisited));
-        assert(count($VAR->countriesVisited) === 0);
-        assert(is_array($VAR->holidays));
-        assert(count($VAR->holidays) === 0);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('travellerId'), 54321)
+        assert_isinstance(context, v.getprop('birthCity'), 'City')
+        assert_eq(context, v.getprop('birthCity').getprop('cityName'), "Barcelona")
+        assert_eq(context, v.getprop('birthCity').getprop('countryName'), "Spain")
+        assert_eq(context, v.getprop('marriageCity'), None)
+        assert_islist(context, v.getprop('citiesVisited'), size=0)
+        assert_isdict(context, v.getprop('countriesVisited'), size=0)
+        assert_isdict(context, v.getprop('holidays'), size=0)

@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
-from typing_extensions import Literal
+from paradox.expressions import PanVar
+from paradox.interfaces import AcceptsStatements
 
-from . import Scenario
+from . import Scenario, assert_eq
 
 
 @dataclass
@@ -13,32 +14,30 @@ class Pet:
     age: Optional[int]
 
 
-PET0 = Scenario(
-    [Pet],
-    {
+class PET0(Scenario):
+    dataclasses = [Pet]
+    obj = {
         "__dataclass__": "Pet",
         "name": "Billy",
         "species": "dog",
         "age": 8,
-    },
-    verify_php='''
-        assert($VAR->name === "Billy");
-        assert($VAR->species === "dog");
-        assert($VAR->age === 8);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Billy")
+        assert_eq(context, v.getprop('species'), "dog")
+        assert_eq(context, v.getprop('age'), 8)
 
 
-PET1 = Scenario(
-    [Pet],
-    {
+class PET1(Scenario):
+    dataclasses = [Pet]
+    obj = {
         "__dataclass__": "Pet",
         "name": "Basil",
         "species": "cat",
-    },
-    verify_php='''
-        assert($VAR->name === "Basil");
-        assert($VAR->species === "cat");
-        assert($VAR->age === null);
-    ''',
-)
+    }
+
+    def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
+        assert_eq(context, v.getprop('name'), "Basil")
+        assert_eq(context, v.getprop('species'), "cat")
+        assert_eq(context, v.getprop('age'), None)

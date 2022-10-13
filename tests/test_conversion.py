@@ -1,15 +1,15 @@
 from pathlib import Path
 from subprocess import run
 from tempfile import TemporaryDirectory
-from textwrap import dedent
-from typing import Any, List, Optional, Union
+from typing import Any, List, Literal, Optional, Union
 
 import pytest
-from paradox.expressions import PanVar, phpexpr
-from paradox.generate.files import FilePHP
+from paradox.expressions import PanVar
+from paradox.generate.statements import HardCodedStatement
+from paradox.output import Script
 from paradox.typing import CrossAny
 
-from .scenarios import Scenario, json_obj_to_php
+from .scenarios import Scenario, json_obj_to_php, json_obj_to_python
 from .scenarios.gadgets import (DEVICE0, DEVICE1, DEVICE2, GADGET0, GADGET1,
                                 GIZMO0, MACHINE0, MACHINE1, MACHINE2, WIDGET0,
                                 WIDGET1)
@@ -23,26 +23,34 @@ def _run_php(script: str, **kwargs: Any) -> None:
     run(cmd, **kwargs)
 
 
+def _run_py(script: str, **kwargs: Any) -> None:
+    run(['python', script], **kwargs)
+
+
 @pytest.mark.parametrize('scenario', [
-    USER0,
-    USER1,
-    PET0,
-    PET1,
-    TRAVELLER0,
-    TRAVELLER1,
-    GADGET0,
-    GADGET1,
-    GIZMO0,
-    WIDGET0,
-    WIDGET1,
-    DEVICE0,
-    DEVICE1,
-    DEVICE2,
-    MACHINE0,
-    MACHINE1,
-    MACHINE2,
+    USER0(),
+    USER1(),
+    PET0(),
+    PET1(),
+    TRAVELLER0(),
+    TRAVELLER1(),
+    GADGET0(),
+    GADGET1(),
+    GIZMO0(),
+    WIDGET0(),
+    WIDGET1(),
+    DEVICE0(),
+    DEVICE1(),
+    DEVICE2(),
+    MACHINE0(),
+    MACHINE1(),
+    MACHINE2(),
 ])
-def test_get_dataclass_spec_php(scenario: Scenario) -> None:
+@pytest.mark.parametrize('lang', ['php', 'python'])
+def test_get_dataclass_spec(
+    scenario: Scenario,
+    lang: Literal['php', 'python'],
+) -> None:
     from bifrostrpc.generators.conversion import getDataclassSpec
     from bifrostrpc.typing import Advanced
 
@@ -52,22 +60,32 @@ def test_get_dataclass_spec_php(scenario: Scenario) -> None:
         adv.addDataclass(dc)
 
     classname = scenario.dataclasses[0].__name__
-    phpinit = f'''
-        $VAR = {classname}::fromDict(
-            {json_obj_to_php(scenario.obj)},
-            "\\$_"
-        )
-        '''
+
+    s = Script()
+
+    for dc in scenario.dataclasses:
+        s.also(getDataclassSpec(dc, adv=adv, lang=lang, hoistcontext=s))
+
+    s.also(HardCodedStatement(
+        php=f'$VAR = {classname}::fromDict({json_obj_to_php(scenario.obj)}, "\\$_");',
+        python=f'VAR = {classname}.fromDict({json_obj_to_python(scenario.obj)}, "DATA")',
+    ))
+    s.also(HardCodedStatement(
+        php=f'assert($VAR instanceof {classname});',
+        python=f'assert isinstance(VAR, {classname})',
+    ))
+
+    scenario.add_assertions(s, PanVar('VAR', CrossAny()))
 
     with TemporaryDirectory() as tmpdir:
-        f = FilePHP(Path(tmpdir) / 'dataclass.php')
-        for dc in scenario.dataclasses:
-            f.contents.also(getDataclassSpec(dc, adv=adv, lang='php', hoistcontext=f.contents))
-        f.contents.also(phpexpr(dedent(phpinit)))
-        f.contents.also(phpexpr(f'assert($VAR instanceof {classname})'))
-        f.contents.also(phpexpr(dedent(scenario.verify_php)))
-        f.writefile()
-        _run_php('dataclass.php', cwd=tmpdir, check=True)
+        if lang == 'php':
+            s.write_to_path(Path(tmpdir) / 'dataclass.php', lang=lang)
+            _run_php('dataclass.php', cwd=tmpdir, check=True)
+        elif lang == 'python':
+            s.write_to_path(Path(tmpdir) / 'dataclass.py', lang=lang)
+            _run_py('dataclass.py', cwd=tmpdir, check=True)
+        else:
+            raise Exception(f"Unexpected lang {lang!r}")
 
 
 # a filter block isn't possible for these input types using PHP

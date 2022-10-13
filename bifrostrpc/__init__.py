@@ -1,10 +1,9 @@
 import logging
 from pathlib import Path
-from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple,
-                    Type, TypeVar)
+from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
+                    Optional, Tuple, Type, TypeVar)
 
 from paradox.generate.files import FilePython, FileTS
-from typing_extensions import Literal
 
 from bifrostrpc.typing import Advanced  # pylint: disable=cyclic-import
 from bifrostrpc.typing import FuncSpec
