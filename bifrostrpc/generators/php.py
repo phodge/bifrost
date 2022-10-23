@@ -32,7 +32,7 @@ def generateClient(
 ) -> None:
     dest.filecomment(HEADER)
 
-    appendFailureModeClasses(dest)
+    appendFailureModeClasses(dest.contents)
 
     # make copies of all our dataclasses
     for dc in adv.getAllDataclasses():
