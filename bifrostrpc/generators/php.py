@@ -28,7 +28,7 @@ def generateClient(
     classname: str,
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
-    flavour: Literal['abstract'],
+    flavour: Literal['abstract', 'curl'],
 ) -> None:
     dest.add_file_comment(HEADER)
 
@@ -47,7 +47,7 @@ def _generateWrappers(
     funcspecs: List[Tuple[str, FuncSpec]],
     *,
     adv: Advanced,
-    flavour: Literal['abstract'],
+    flavour: Literal['abstract', 'curl'],
     context: AcceptsStatements,
 ) -> None:
     next_conv_nr = 1
@@ -72,6 +72,11 @@ def _generateWrappers(
     # It may modify result before returning it. It may raise a TypeError
     # if any part of result does not match the method's return type.
     dispatchfn.addPositionalArg('converter_name', CrossCallable([CrossAny()], CrossAny()))
+
+    if flavour == 'curl':
+        raise Exception("TODO: add curl implementation here")  # noqa
+    else:
+        assert flavour == 'abstract'
 
     for name, funcspec in funcspecs:
         retspec = funcspec.getReturnSpec()
