@@ -154,7 +154,8 @@ class BifrostRPCService:
             flavour=flavour,
         )
 
-        script.write_to_path(modulepath, lang='python', pretty=True)
+        # TODO: turn pretty on when paradox adds support
+        script.write_to_path(modulepath, lang='python', pretty=False)
 
     def generatePHPClient(
         self,
