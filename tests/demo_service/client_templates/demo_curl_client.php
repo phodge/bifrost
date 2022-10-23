@@ -6,7 +6,7 @@ class DemoCurlClient extends TestClient {
         array $params,
         $converter_name
     ) {
-        $port = intval($_ENV['DEMO_SERVICE_PORT']);
+        $port = intval(getenv('DEMO_SERVICE_PORT'));
         $host = '127.0.0.1';
         $url = "http://{$host}:{$port}/api.v1/call/{$method}";
         $headers = [
