@@ -69,6 +69,7 @@ def _generateAdvancedTypes(dest: AcceptsStatements, adv: Advanced) -> None:
         dest.also(tsexpr(f'export type {name} = {typeExpr}'))
 
     for dc in adv.getAllDataclasses():
+        raise Exception("TODO: unit test this code path")  # noqa
         dest.blank()
         iface = dest.also(InterfaceSpec(dc.__name__, tsexport=True))
         for field in dataclasses.fields(dc):
@@ -84,6 +85,7 @@ def _generateWrappers(
     adv: Advanced,
     flavour: Literal['abstract'],
 ) -> None:
+    raise Exception("TODO: unit test this code path")  # noqa
     cls = dest.also(ClassSpec(
         classname,
         isabstract=True,
