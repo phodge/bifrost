@@ -36,7 +36,7 @@ def generateClient(
 
     # make copies of all our dataclasses
     for dc in adv.getAllDataclasses():
-        dcspec = getDataclassSpec(dc, adv=adv, lang='php')
+        dcspec = getDataclassSpec(dc, adv=adv, lang='php', hoistcontext=dest.contents)
         dest.contents.also(dcspec)
 
     # generate function wrappers
