@@ -1,4 +1,5 @@
 import random
+import time
 from os.path import dirname
 from subprocess import Popen
 from typing import Any, Iterator
@@ -27,6 +28,7 @@ def demo_service_port() -> Iterator[int]:
 
         # TODO: do we need a mechanism to wait for the Flask service to become available before we
         # start executing the test?
+        time.sleep(0.2)
         yield port
     finally:
         if p:
