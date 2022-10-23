@@ -119,6 +119,8 @@ def _generateWrappers(
         v_args = PanVar('args', dictof(str, CrossAny()))
         argnames = DictBuilderStatement.fromPanVar(v_args)
         for n in funcspec.getArgSpecs().keys():
+            # TODO: dataclasses aren't automatically JSON serializable, so we need to raise an
+            # error if we try to generate a client that has a dataclass argument type
             argnames.addPair(n, False)
         method.also(argnames)
 
