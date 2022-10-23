@@ -18,6 +18,7 @@ service = BifrostRPCService()
 UserName = NewType('UserName', str)
 
 
+# TODO: add a method that requires some kind of auth
 class NoLogin:
     pass
 
@@ -45,6 +46,12 @@ service.addDataclass(Pet)
 @service.rpcmethod
 def get_reversed(_: NoLogin, input_: str) -> str:
     return input_[::-1]
+
+# TODO: test adding a new scalar type
+# TODO: test adding a new dataclass type
+# TODO: test addInternalType()
+# TODO: test addExternalType()
+# TODO: test addAuthType()
 
 
 @service.rpcmethod
