@@ -26,6 +26,7 @@ def generateClient(
     dest: Script,
     *,
     classname: str,
+    namespace: str = None,
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
     flavour: Literal['abstract', 'curl'],
