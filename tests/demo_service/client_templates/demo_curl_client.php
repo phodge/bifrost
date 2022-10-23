@@ -25,8 +25,15 @@ class DemoCurlClient extends TestClient {
             throw new Exception("CURL ERROR: $err");
         }
 
+        $info = curl_getinfo($ch);
+        if ($info['http_code'] !== 200) {
+            return new ApiBroken("Unexpected HTTP {$info['http_code']} response from rpc server: {$result}");
+        }
+
+        // TODO: should return ApiBroken() when we don't get valid JSON back
         $data = json_decode($result, true);
 
+        // TODO: should return ApiBroken() when the converter fails
         $ret = $this->{$converter_name}($data);
         return $ret;
     }
