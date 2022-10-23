@@ -168,7 +168,8 @@ class BifrostRPCService:
         self,
         filepath: Path,
         classname: str,
-        flavour: Literal['abstract'],
+        flavour: Literal['abstract', 'curl'],
+        # TODO: namespace?
     ) -> None:
         # pylint: disable=cyclic-import
         from bifrostrpc.generators.php import generateClient
