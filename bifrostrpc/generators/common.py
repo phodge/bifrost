@@ -1,16 +1,16 @@
-from paradox.generate.files import FileSpec
 from paradox.generate.statements import ClassSpec
+from paradox.interfaces import AcceptsStatements
 
 
-def appendFailureModeClasses(dest: FileSpec) -> None:
-    dest.contents.remark('failure modes')
-    af = dest.contents.also(ClassSpec(
+def appendFailureModeClasses(dest: AcceptsStatements) -> None:
+    dest.remark('failure modes')
+    af = dest.also(ClassSpec(
         'ApiFailure',
         docstring=['parent class of all failure modes'],
         tsexport=True,
     ))
     af.addProperty('message', str, initarg=True)
-    c_ApiOutage = dest.contents.also(ClassSpec(
+    c_ApiOutage = dest.also(ClassSpec(
         'ApiOutage',
         tsexport=True,
         docstring=[
@@ -23,7 +23,7 @@ def appendFailureModeClasses(dest: FileSpec) -> None:
     c_ApiOutage.setPHPParentClass('ApiFailure')
     c_ApiOutage.setTypeScriptParentClass('ApiFailure')
 
-    c_ApiBroken = dest.contents.also(ClassSpec(
+    c_ApiBroken = dest.also(ClassSpec(
         'ApiBroken',
         tsexport=True,
         docstring=[

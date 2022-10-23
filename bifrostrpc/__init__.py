@@ -3,7 +3,8 @@ from pathlib import Path
 from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
                     Optional, Tuple, Type, TypeVar)
 
-from paradox.generate.files import FilePHP, FilePython, FileTS
+from paradox.generate.files import FilePHP, FileTS
+from paradox.output import Script
 
 from bifrostrpc.typing import Advanced  # pylint: disable=cyclic-import
 from bifrostrpc.typing import FuncSpec
@@ -143,13 +144,17 @@ class BifrostRPCService:
         # pylint: disable=cyclic-import
         from bifrostrpc.generators.python import generateClient
 
+        script = Script()
+
         generateClient(
-            FilePython(modulepath),
+            script,
             classname=classname,
             funcspecs=[(k, self._getTypeSpec(k)) for k in self._targets],
             adv=self._adv,
             flavour=flavour,
         )
+
+        script.write_to_path(modulepath, lang='python', pretty=True)
 
     def generatePHPClient(
         self,
