@@ -1,13 +1,17 @@
 from pathlib import Path
 from subprocess import run
 from tempfile import TemporaryDirectory
-from typing import Any, List, Literal, Optional, Union
+from typing import (Any, Callable, Iterable, List, Literal, Optional, Tuple,
+                    Union)
 
 import pytest
-from paradox.expressions import PanVar
+from paradox.expressions import PanExpr, PanVar, pan, pandict, panlist, phpexpr
+from paradox.generate.files import FilePHP
 from paradox.generate.statements import HardCodedStatement
 from paradox.output import Script
 from paradox.typing import CrossAny
+
+from bifrostrpc.typing import NullTypeSpec, TypeSpec, UnionTypeSpec
 
 from .scenarios import Scenario, json_obj_to_php, json_obj_to_python
 from .scenarios.gadgets import (DEVICE0, DEVICE1, DEVICE2, GADGET0, GADGET1,
@@ -108,3 +112,114 @@ def test_get_filter_block_php_not_possible(input_type: Any) -> None:
             names=Names(),
             lang='php',
         )
+
+
+PHP_INPUTS: Iterable[Tuple[Any, List[Any], List[Any], bool]] = [
+        (
+            str,
+            ['', 'hello'],
+            [False, True, 5, 5.5, [], ['hello'], {}, {'message': 'hello'}],
+            True,
+        ),
+        (
+            int,
+            [-5, 0, 5],
+            [False, True, 5.5, 5.0, '', 'stringval', [], ['hello'], {}, {'message': 'hello'}],
+            True,
+        ),
+        (
+            bool,
+            [True, False],
+            [5.5, 5.0, '', 'stringval', [], ['hello'], {}, {'message': 'hello'}],
+            True,
+        ),
+        # TODO: refactor this to a single Literal with 3 possible values
+        (
+            Union[Literal[2], Literal[4], Literal[6]],
+            [2, 4, 6],
+            [False, True, 0, 5, 5.5, [], ['hello'], [2], {}, {'number': 2}],
+            True,
+        ),
+        # and now List[T]
+        (
+            List[str],
+            [[], [''], ['test', 'True', '5']],
+            [None],
+            False,
+        ),
+]
+
+
+def parametrize(
+    fn: Callable[..., None],
+    #target_type: Union[Type[str], Type[int]],
+    #valid_values: Any,
+    #invalid_values: Any,
+) -> Callable[..., None]:
+    from bifrostrpc.typing import Advanced, getTypeSpec
+
+    adv = Advanced()
+    inputs = []
+    for target_type, valid_values, invalid_values, attempt_optional in PHP_INPUTS:
+        typespec = getTypeSpec(target_type, adv=adv)
+        for value in valid_values:
+            inputs.append([typespec, value, True])
+        for value in invalid_values:
+            inputs.append([typespec, value, False])
+
+        # null/None is not valid by default
+        inputs.append([typespec, None, False])
+
+        # make an Optional[...] version of the typespec where null/None is valid
+        if attempt_optional:
+            inputs.append([UnionTypeSpec([typespec, NullTypeSpec()]), None, True])
+
+    return pytest.mark.parametrize('typespec,test_input,is_valid', inputs)(fn)
+
+
+@parametrize
+def test_get_filter_block_php(typespec: TypeSpec, test_input: Any, is_valid: bool) -> None:
+    # TODO: this unit test might be pointless: all of this logic should have been covered by the
+    # dataclass-converter-generator unit tests above. We should try and measure code coverage and
+    # remove this test if it isn't covering any additional code.
+    if isinstance(test_input, float):
+        # TODO: add support for floating point values
+        return
+
+    pan_input: PanExpr
+
+    if isinstance(test_input, list):
+        pan_input = panlist(test_input, CrossAny())
+    elif isinstance(test_input, dict):
+        pan_input = pandict(test_input, CrossAny())
+    else:
+        pan_input = pan(test_input)
+
+    from bifrostrpc.generators import Names
+    from bifrostrpc.generators.conversion import getFilterBlock
+
+    names = Names()
+    v_input = PanVar('TEST_INPUT', CrossAny())
+
+    stmt = getFilterBlock(v_input, '$TEST_INPUT', spec=typespec, names=names, lang='php')
+
+    with TemporaryDirectory() as tmpdir:
+        outfile = Path(tmpdir) / 'filter.php'
+        f = FilePHP(outfile)
+        f.contents.alsoAssign(v_input, pan_input)
+        f.contents.alsoAssign(PanVar('is_valid', CrossAny()), pan(is_valid))
+        if is_valid:
+            f.contents.also(stmt)
+        else:
+            with f.contents.withTryBlock() as tryblock:
+                tryblock.also(stmt)
+                tryblock.alsoRaise(
+                    'Exception',
+                    msg='Invalid $TEST_INPUT should have raised exception',
+                )
+                with tryblock.withCatchBlock('UnexpectedValueException') as catchblock:
+                    catchblock.also(phpexpr('echo "all good";'))
+        f.writefile()
+        run(['php', 'filter.php'], cwd=tmpdir, check=True)
+
+
