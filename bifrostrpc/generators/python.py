@@ -34,9 +34,6 @@ def generateClient(
 ) -> None:
     dest.add_file_comment(HEADER)
 
-    # we're always going to need typing module
-    dest.contents.alsoImportPy("typing")
-
     appendFailureModeClasses(dest)
 
     # make copies of all our dataclasses
