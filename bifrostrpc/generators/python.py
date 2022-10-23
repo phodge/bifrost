@@ -2,9 +2,9 @@ from typing import List, Tuple
 
 from paradox.expressions import (PanCall, PanStringBuilder, PanVar, exacteq_,
                                  not_, pan, pandict, pyexpr)
-from paradox.generate.files import FilePython
 from paradox.generate.statements import (ClassSpec, DictBuilderStatement,
                                          FunctionSpec)
+from paradox.output import Script
 from paradox.typing import (CrossAny, CrossCallable, CrossCustomType, dictof,
                             unionof)
 
@@ -25,14 +25,14 @@ T_ApiFailure = CrossCustomType(python='ApiFailure')
 
 
 def generateClient(
-    dest: FilePython,
+    dest: Script,
     *,
     classname: str,
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
     flavour: Flavour,
 ) -> None:
-    dest.filecomment(HEADER)
+    dest.add_file_comment(HEADER)
 
     # we're always going to need typing module
     dest.contents.alsoImportPy("typing")
@@ -41,15 +41,10 @@ def generateClient(
 
     # make copies of all our dataclasses
     for dc in adv.getAllDataclasses():
-        dest.contents.also(
-            getDataclassSpec(dc, adv=adv, lang='python', hoistcontext=dest.contents)
-        )
+        dest.also(getDataclassSpec(dc, adv=adv, lang='python', hoistcontext=dest))
 
     # generate function wrappers
-    dest.contents.also(_generateClientClass(classname, funcspecs, adv, flavour))
-
-    dest.writefile()
-    dest.makepretty()
+    dest.also(_generateClientClass(classname, funcspecs, adv, flavour))
 
 
 def _generateClientClass(
