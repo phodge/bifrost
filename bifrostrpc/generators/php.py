@@ -33,6 +33,9 @@ def generateClient(
 ) -> None:
     dest.add_file_comment(HEADER)
 
+    if namespace:
+        raise Exception("TODO: declare namespace")  # noqa
+
     appendFailureModeClasses(dest)
 
     # make copies of all our dataclasses
