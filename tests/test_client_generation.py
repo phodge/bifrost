@@ -122,6 +122,10 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     if demo_runner.lang not in ('python', 'php'):
         raise Exception(f"Unexpected lang {demo_runner.lang!r}")
 
+    if demo_runner.lang == 'php' and demo_runner.flavour == 'curl':
+        demo_runner.tmppath = '/tmp/phpclient'
+        raise Exception("TODO: test this code path")  # noqa
+
     s = Script()
 
     s.also(HardCodedStatement(
