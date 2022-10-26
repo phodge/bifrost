@@ -50,6 +50,9 @@ def test_generate_php_client(flavour: str, demo_service: Any, demo_service_port:
             assert($pets[1] instanceof Pet);
             assert($pets[0]->name === "Basil");
             assert($pets[1]->name === "Billy");
+
+            $check = $service->check_pets(['basil' => $pets[0], 'billy' => $pets[1]]);
+            assert($check === 'pets_ok!');
             '''
         )
         demo_path = Path(tmpdir) / 'demo.php'
@@ -111,10 +114,24 @@ def test_generate_python_client(flavour: str, demo_service: Any, demo_service_po
         demo_script = dedent(
             '''
             from get_client import get_client
+            from generated_client import Pet
 
             t = get_client()
             rev = t.get_reversed("Hello world")
             assert rev == "dlrow olleH"
+
+            pets = t.get_pets()
+            assert isinstance(pets, list)
+            assert len(pets) == 2
+            assert isinstance(pets[0], Pet)
+            assert isinstance(pets[1], Pet)
+            assert pets[0].name == "Basil"
+            assert pets[1].name == "Billy"
+
+            # TODO: we can't pass dataclasses as args yet in python because python doesn't
+            # automatically json-encode dataclasses
+            # check = t.check_pets({'basil': pets[0], 'billy': pets[1]})
+            # assert check == 'pets_ok!'
             '''
         )
         demo_path.write_text(demo_script)
