@@ -42,6 +42,14 @@ def test_generate_php_client(flavour: str, demo_service: Any, demo_service_port:
             $service = new DemoCurlClient();
             $rev = $service->get_reversed("Hello world");
             assert($rev === "dlrow olleH");
+
+            $pets = $service->get_pets();
+            assert(is_array($pets));
+            assert(count($pets) === 2);
+            assert($pets[0] instanceof Pet);
+            assert($pets[1] instanceof Pet);
+            assert($pets[0]->name === "Basil");
+            assert($pets[1]->name === "Billy");
             '''
         )
         demo_path = Path(tmpdir) / 'demo.php'

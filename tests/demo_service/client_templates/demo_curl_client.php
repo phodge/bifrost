@@ -25,7 +25,7 @@ class DemoCurlClient extends TestClient {
             throw new Exception("CURL ERROR: $err");
         }
 
-        $data = json_decode($result);
+        $data = json_decode($result, true);
 
         $ret = $this->{$converter_name}($data);
         return $ret;
