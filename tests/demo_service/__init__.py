@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from flask import Flask
 
@@ -27,6 +27,27 @@ def get_pets(_: NoLogin) -> List[Pet]:
             Pet(name="Basil", species="dog", age=7),
             Pet(name="Billy", species="dog", age=10),
     ]
+
+
+@service.rpcmethod
+def check_pets(_: NoLogin, pets: Dict[str, Pet]) -> str:
+    try:
+        basil = pets['basil']
+    except KeyError:
+        return "Basil is missing"
+
+    try:
+        billy = pets['billy']
+    except KeyError:
+        return "Billy is missing"
+
+    if basil.name != 'Basil':
+        return f"pets['basil'] has wrong name {basil.name!r}"
+
+    if billy.name != 'Billy':
+        return f"pets['billy'] has wrong name {billy.name!r}"
+
+    return "pets_ok!"
 
 
 app = Flask('tests.demo_service')
