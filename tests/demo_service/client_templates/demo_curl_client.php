@@ -27,6 +27,7 @@ class DemoCurlClient extends TestClient {
 
         $info = curl_getinfo($ch);
         if ($info['http_code'] !== 200) {
+            # TODO: test this code path when we rework errors
             return new ApiBroken("Unexpected HTTP {$info['http_code']} response from rpc server: {$result}");
         }
 

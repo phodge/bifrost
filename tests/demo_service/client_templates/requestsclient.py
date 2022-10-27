@@ -23,6 +23,7 @@ class RequestsPythonClient(ClientBase):
         if result.status_code != 200:
             # TODO: return ApiBroken instead when appropriate
             # TODO: have more descriptive errors for various types of errors
+            # TODO: test this code path when we rework errors
             return ApiOutage(
                 f'Unexpected HTTP {result.status_code} response from rpc server: {result.text}'
             )

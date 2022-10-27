@@ -188,6 +188,15 @@ class BifrostRPCService:
             try:
                 fn, spec = self.getThings(method)
 
+                # TODO: we should be rethinking errors / error codes and make sure the generated
+                # clients handle these scenarios correctly and visibly.
+                # - server error (503 etc)
+                # - network outage
+                # - client error (e.g. sending a HTTP GET instead of POST)
+                # - client misuse (passing wrong data type to a generated client method)
+                # Also this might be the point where we rethink whether it was a good idea to
+                # return error codes as values instead of raising them as exceptions.
+
                 # GET request is allowed for methods with no arguments
                 if request.method == 'GET':
                     # FIXME: apparently GET (and HEAD) are mandatory methods and must not return a
