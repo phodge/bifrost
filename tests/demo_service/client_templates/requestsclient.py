@@ -23,7 +23,9 @@ class RequestsPythonClient(ClientBase):
         if result.status_code != 200:
             # TODO: return ApiBroken instead when appropriate
             # TODO: have more descriptive errors for various types of errors
-            return ApiOutage(f'Response {result.status_code} from gecko server: {result.text}')
+            return ApiOutage(
+                f'Unexpected HTTP {result.status_code} response from rpc server: {result.text}'
+            )
 
         # read JSON blob or bomb out
         try:
