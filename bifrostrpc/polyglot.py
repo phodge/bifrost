@@ -3,11 +3,11 @@ from typing import Dict, Iterable, Iterator, Optional, Tuple
 
 from paradox.expressions import (PanExpr, PanVar, PHPPrecedence, PyPrecedence,
                                  TSPrecedence)
-from paradox.generate.files import FileWriter
 from paradox.generate.statements import (CatchBlock2, ImportSpecPHP,
                                          ImportSpecPy, ImportSpecTS,
                                          SimpleRaise, Statement, TryCatchBlock)
 from paradox.interfaces import AcceptsStatements
+from paradox.output import FileWriter
 from paradox.typing import CrossType
 
 TYPE_ERROR_CLS = {
