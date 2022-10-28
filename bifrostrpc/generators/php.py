@@ -1,9 +1,9 @@
 from typing import List, Literal, Tuple
 
 from paradox.expressions import PanCall, PanProp, PanVar, pan
-from paradox.generate.files import FilePHP
 from paradox.generate.statements import ClassSpec, DictBuilderStatement
 from paradox.interfaces import AcceptsStatements
+from paradox.output import Script
 from paradox.typing import (CrossAny, CrossCallable, CrossCustomType, dictof,
                             unionof)
 
@@ -23,27 +23,23 @@ T_ApiFailure = CrossCustomType(phplang='ApiFailure', phpdoc='ApiFailure')
 
 
 def generateClient(
-    dest: FilePHP,
+    dest: Script,
     *,
     classname: str,
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
     flavour: Literal['abstract'],
 ) -> None:
-    dest.filecomment(HEADER)
+    dest.add_file_comment(HEADER)
 
-    appendFailureModeClasses(dest.contents)
+    appendFailureModeClasses(dest)
 
     # make copies of all our dataclasses
     for dc in adv.getAllDataclasses():
-        dcspec = getDataclassSpec(dc, adv=adv, lang='php', hoistcontext=dest.contents)
-        dest.contents.also(dcspec)
+        dest.also(getDataclassSpec(dc, adv=adv, lang='php', hoistcontext=dest))
 
     # generate function wrappers
-    _generateWrappers(classname, funcspecs, adv=adv, flavour=flavour, context=dest.contents)
-
-    dest.writefile()
-    dest.makepretty()
+    _generateWrappers(classname, funcspecs, adv=adv, flavour=flavour, context=dest)
 
 
 def _generateWrappers(

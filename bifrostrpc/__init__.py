@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
                     Optional, Tuple, Type, TypeVar)
 
-from paradox.generate.files import FilePHP, FileTS
+from paradox.generate.files import FileTS
 from paradox.output import Script
 
 from bifrostrpc.typing import Advanced  # pylint: disable=cyclic-import
@@ -166,13 +166,18 @@ class BifrostRPCService:
         # pylint: disable=cyclic-import
         from bifrostrpc.generators.php import generateClient
 
+        script = Script()
+
         generateClient(
-            FilePHP(filepath),
+            script,
             classname=classname,
             funcspecs=[(k, self._getTypeSpec(k)) for k in self._targets],
             adv=self._adv,
             flavour=flavour,
         )
+
+        # TODO: turn pretty on when paradox adds support
+        script.write_to_path(filepath, lang='php', pretty=False)
 
     def get_flask_blueprint(self, name: str, import_name: str) -> "flask.Blueprint":
         from flask import Blueprint, Response
