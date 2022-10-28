@@ -151,9 +151,6 @@ PHP_INPUTS: Iterable[Tuple[Any, List[Any], List[Any], bool]] = [
 
 def parametrize(
     fn: Callable[..., None],
-    #target_type: Union[Type[str], Type[int]],
-    #valid_values: Any,
-    #invalid_values: Any,
 ) -> Callable[..., None]:
     from bifrostrpc.typing import Advanced, getTypeSpec
 
