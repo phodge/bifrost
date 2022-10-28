@@ -6,7 +6,6 @@ from typing import (Any, Callable, Iterable, List, Literal, Optional, Tuple,
 
 import pytest
 from paradox.expressions import PanExpr, PanVar, pan, pandict, panlist, phpexpr
-from paradox.generate.files import FilePHP
 from paradox.generate.statements import HardCodedStatement
 from paradox.output import Script
 from paradox.typing import CrossAny
@@ -198,28 +197,27 @@ def test_get_filter_block_php(typespec: TypeSpec, test_input: Any, is_valid: boo
     from bifrostrpc.generators import Names
     from bifrostrpc.generators.conversion import getFilterBlock
 
-    names = Names()
     v_input = PanVar('TEST_INPUT', CrossAny())
 
+    s = Script()
+    s.alsoAssign(v_input, pan_input)
+    s.alsoAssign(PanVar('is_valid', CrossAny()), pan(is_valid))
+
+    names = Names()
     stmt = getFilterBlock(v_input, '$TEST_INPUT', spec=typespec, names=names, lang='php')
 
+    if is_valid:
+        s.also(stmt)
+    else:
+        with s.withTryBlock() as tryblock:
+            tryblock.also(stmt)
+            tryblock.alsoRaise(
+                'Exception',
+                msg='Invalid $TEST_INPUT should have raised exception',
+            )
+            with tryblock.withCatchBlock('UnexpectedValueException') as catchblock:
+                catchblock.also(phpexpr('echo "all good";'))
+
     with TemporaryDirectory() as tmpdir:
-        outfile = Path(tmpdir) / 'filter.php'
-        f = FilePHP(outfile)
-        f.contents.alsoAssign(v_input, pan_input)
-        f.contents.alsoAssign(PanVar('is_valid', CrossAny()), pan(is_valid))
-        if is_valid:
-            f.contents.also(stmt)
-        else:
-            with f.contents.withTryBlock() as tryblock:
-                tryblock.also(stmt)
-                tryblock.alsoRaise(
-                    'Exception',
-                    msg='Invalid $TEST_INPUT should have raised exception',
-                )
-                with tryblock.withCatchBlock('UnexpectedValueException') as catchblock:
-                    catchblock.also(phpexpr('echo "all good";'))
-        f.writefile()
+        s.write_to_path(Path(tmpdir) / 'filter.php', lang="php")
         run(['php', 'filter.php'], cwd=tmpdir, check=True)
-
-
