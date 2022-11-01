@@ -9,6 +9,8 @@ from typing import Any
 
 import pytest
 
+DEMO_SERVICE_ROOT = Path(__file__).parent / 'demo_service'
+
 
 def _run_php(script: str, **kwargs: Any) -> None:
     cmd = ['php', '-d', 'assert.exception=1', script]
@@ -22,10 +24,9 @@ def test_generate_php_client(flavour: str, demo_service: Any, demo_service_port:
 
         if flavour == 'abstract':
             demo_service.generatePHPClient(clientpath, 'TestClient', flavour='abstract')
-            demo_service_root = Path(__file__).parent / 'demo_service'
             # install our get_client.php helper module
             shutil.copy(
-                    demo_service_root / 'client_templates' / 'demo_curl_client.php',
+                    DEMO_SERVICE_ROOT / 'client_templates' / 'demo_curl_client.php',
                     Path(tmpdir) / 'demo_curl_client.php'
                     )
         else:
