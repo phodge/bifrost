@@ -1,10 +1,11 @@
 import dataclasses
 import re
-from typing import List, Optional, Tuple, cast
+from typing import List, Literal, Optional, Tuple, cast
 
 from paradox.expressions import pandict, tsexpr
-from paradox.generate.files import FileTS
 from paradox.generate.statements import ClassSpec, InterfaceSpec, RawTypescript
+from paradox.interfaces import AcceptsStatements
+from paradox.output import Script
 from paradox.typing import (CrossAny, CrossCallable, CrossCustomType, dictof,
                             unionof)
 
@@ -28,32 +29,30 @@ T_ApiFailure = CrossCustomType(typescript='ApiFailure')
 
 
 def generateClient(
-    dest: FileTS,
+    dest: Script,
     *,
     classname: str,
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
+    flavour: Literal['abstract'],
 ) -> None:
-    dest.filecomment(HEADER)
+    dest.add_file_comment(HEADER)
 
-    appendFailureModeClasses(dest.contents)
+    appendFailureModeClasses(dest)
     _importExternalTypes(dest, adv)
     _generateAdvancedTypes(dest, adv)
-    _generateWrappers(dest, classname, funcspecs, adv)
-
-    dest.writefile()
-    dest.makepretty()
+    _generateWrappers(dest, classname, funcspecs, adv=adv, flavour=flavour)
 
 
-def _importExternalTypes(dest: FileTS, adv: Advanced) -> None:
+def _importExternalTypes(dest: AcceptsStatements, adv: Advanced) -> None:
     for name, (tsmodule, ) in adv.getExternalTypeDetails():
         # XXX: dirty hack get rid of this
         if name in ('TagID', 'CategoryName', 'CategoryDesc', 'CategoryID'):
             continue
-        dest.contents.alsoImportTS(tsmodule, [name])
+        dest.alsoImportTS(tsmodule, [name])
 
 
-def _generateAdvancedTypes(dest: FileTS, adv: Advanced) -> None:
+def _generateAdvancedTypes(dest: AcceptsStatements, adv: Advanced) -> None:
     for name, baseType, children in adv.getNewTypeDetails():
         try:
             tsprimitive = PRIMITIVES[baseType.__name__]
@@ -66,24 +65,26 @@ def _generateAdvancedTypes(dest: FileTS, adv: Advanced) -> None:
         if children:
             typeExpr = ' | '.join(children) + ' | (' + typeExpr + ')'
 
-        dest.contents.blank()
-        dest.contents.also(tsexpr(f'export type {name} = {typeExpr}'))
+        dest.blank()
+        dest.also(tsexpr(f'export type {name} = {typeExpr}'))
 
     for dc in adv.getAllDataclasses():
-        dest.contents.blank()
-        iface = dest.contents.also(InterfaceSpec(dc.__name__, tsexport=True))
+        dest.blank()
+        iface = dest.also(InterfaceSpec(dc.__name__, tsexport=True))
         for field in dataclasses.fields(dc):
             generated = _generateCrossType(getTypeSpec(field.type, adv), adv)
             iface.addProperty(field.name, generated)
 
 
 def _generateWrappers(
-    dest: FileTS,
+    dest: AcceptsStatements,
     classname: str,
     funcspecs: List[Tuple[str, FuncSpec]],
+    *,
     adv: Advanced,
+    flavour: Literal['abstract'],
 ) -> None:
-    cls = dest.contents.also(ClassSpec(
+    cls = dest.also(ClassSpec(
         classname,
         isabstract=True,
         tsexport=True,
@@ -94,7 +95,7 @@ def _generateWrappers(
     dispatchfn = cls.createMethod(
         'dispatch',
         CrossCustomType(typescript='Promise<ApiFailure | any>'),
-        isabstract=True,
+        isabstract=flavour == 'abstract',
     )
     # the method that should be called
     dispatchfn.addPositionalArg('method', str)
@@ -104,6 +105,10 @@ def _generateWrappers(
     # returning it. It may raise a TypeError if any part of result does not match the method's
     # return type.
     dispatchfn.addPositionalArg('converter', CrossCallable([CrossAny()], CrossAny()))
+
+    if flavour != 'abstract':
+        # XXX: implement other flavours here
+        raise Exception(f"Unexpected flavour {flavour!r}")
 
     for name, funcspec in funcspecs:
         argnames = funcspec.getArgSpecs().keys()

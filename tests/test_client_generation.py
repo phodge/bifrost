@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import run
 from tempfile import TemporaryDirectory
 from textwrap import dedent
-from typing import Any
+from typing import Any, Iterable, List, Union
 
 import pytest
 
@@ -15,6 +15,12 @@ DEMO_SERVICE_ROOT = Path(__file__).parent / 'demo_service'
 def _run_php(script: str, **kwargs: Any) -> None:
     cmd = ['php', '-d', 'assert.exception=1', script]
     run(cmd, **kwargs, check=True)
+
+
+@pytest.fixture(scope='function')
+def tmppath() -> Iterable[Path]:
+    with TemporaryDirectory() as tmpdir:
+        yield Path(tmpdir)
 
 
 @pytest.mark.parametrize('flavour', ['abstract'])
@@ -147,3 +153,100 @@ def test_generate_python_client(flavour: str, demo_service: Any, demo_service_po
                 PYTHONPATH=dirname(__file__) + '/demo_service/client_templates',
             ),
         )
+
+
+@pytest.mark.parametrize('flavour', ['abstract'])
+def test_generate_typescript_client(
+    flavour: str,
+    demo_service: Any,
+    demo_service_port: int,
+    tmppath: Path,
+) -> None:
+    get_client_path = tmppath / 'get_client.ts'
+
+    if flavour == 'abstract':
+        demo_service.generateTypescriptWebClient(
+            tmppath / 'generated_methods.ts',
+            'ClientBase',
+            flavour='abstract',
+            npmroot=tmppath,
+        )
+        # we need to install our Node HTTP client into the tmp folder
+        shutil.copy(
+            DEMO_SERVICE_ROOT / 'client_templates' / 'demo_HTTP_client.ts',
+            tmppath / 'demo_HTTP_client.ts'
+        )
+        get_client_script = dedent(
+            '''
+            import {DemoClient} from './demo_HTTP_client';
+
+            export function get_client() {
+                const port: string|undefined = process.env.DEMO_SERVICE_PORT;
+                if (port === undefined || port === '') {
+                    throw new Error("$DEMO_SERVICE_PORT is empty");
+                }
+                return new DemoClient('127.0.0.1', parseInt(port, 10));
+            }
+            '''
+        )
+    else:
+        raise Exception(f"Unexpected flavour {flavour!r}")
+
+    # write out the get_client script
+    get_client_path.write_text(get_client_script)
+
+    demo_script = dedent(
+        '''
+        import {get_client} from './get_client';
+        import {Pet, ClientBase} from './generated_methods';
+        import {ApiFailure} from './generated_methods';
+        import {assert_eq, assert_islist} from './assertlib';
+
+        // NOTE: we need to wrap the assertions in an async function because CommonJS format
+        // doesn't permit await at the top level
+        (async () => {
+            let c: ClientBase = get_client();
+            const rev = await c.get_reversed("Hello world");
+            assert_eq(rev, "dlrow olleH");
+
+            const pets = await c.get_pets()
+            assert_islist(pets, 2);
+            assert_eq(pets[0].name, "Basil");
+            assert_eq(pets[1].name, "Billy");
+
+            const check = await c.check_pets({'basil': pets[0], 'billy': pets[1]})
+            assert_eq(check, 'pets_ok!');
+        })();
+        '''
+    )
+    (tmppath / 'demo.ts').write_text(demo_script)
+
+    # first we need to install Node libs (typescript etc)
+    for filename in ['tsConfig.json', 'package.json', 'package-lock.json', 'assertlib.ts']:
+        shutil.copy(
+            DEMO_SERVICE_ROOT / 'client_templates' / filename,
+            tmppath / filename,
+        )
+    run(['npm', 'install'], check=True, cwd=tmppath)
+
+    # next we need to compile the source files
+    buildpath = tmppath / 'build'
+    npxcmd: List[Union[str, os.PathLike[str]]] = [
+        'npx',
+        'tsc',
+        '--outDir', buildpath,
+        # needed for use of Promise<T>
+        # XXX: adding 'DOM' to prevent complaints about fetch API being missing
+        '--lib', 'ES2015,DOM',
+        # for execution with vanilla Node
+        '--module', 'commonjs',
+    ]
+    run(npxcmd, check=True, cwd=tmppath)
+
+    # finally we can run the generated demo script
+    run(
+        ['node', buildpath / 'demo.js'],
+        check=True,
+        cwd=buildpath,
+        env=dict(**os.environ, DEMO_SERVICE_PORT=str(demo_service_port)),
+    )
