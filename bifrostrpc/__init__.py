@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import (TYPE_CHECKING, Any, Callable, Dict, List, Literal,
                     Optional, Tuple, Type, TypeVar)
 
-from paradox.generate.files import FileTS
 from paradox.output import Script
 
 from bifrostrpc.typing import Advanced  # pylint: disable=cyclic-import
@@ -124,16 +123,24 @@ class BifrostRPCService:
         classname: str,
         *,
         npmroot: Path,
+        flavour: Literal['abstract'],
     ) -> None:
         # pylint: disable=cyclic-import
         from bifrostrpc.generators.typescript import generateClient
 
+        script = Script()
+
         generateClient(
-            FileTS(modulepath, npmroot=npmroot),
+            script,
             classname=classname,
             funcspecs=[(k, self._getTypeSpec(k)) for k in self._targets],
             adv=self._adv,
+            flavour=flavour,
         )
+
+        # TODO: turn pretty on when paradox adds support
+        # NOTE: we expect this is what the `npmroot` arg will be needed for
+        script.write_to_path(modulepath, lang='typescript', pretty=False)
 
     def generatePythonClient(
         self,
