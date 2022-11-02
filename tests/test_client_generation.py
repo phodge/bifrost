@@ -222,7 +222,7 @@ def test_generate_typescript_client(
     (tmppath / 'demo.ts').write_text(demo_script)
 
     # first we need to install Node libs (typescript etc)
-    for filename in ['tsConfig.json', 'package.json', 'package-lock.json', 'assertlib.ts']:
+    for filename in ['tsconfig.json', 'package.json', 'package-lock.json', 'assertlib.ts']:
         shutil.copy(
             DEMO_SERVICE_ROOT / 'client_templates' / filename,
             tmppath / filename,
