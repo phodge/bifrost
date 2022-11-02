@@ -144,7 +144,7 @@ def test_generate_python_client(flavour: str, demo_service: Any, demo_service_po
         demo_path.write_text(demo_script)
 
         run(
-            ['python', demo_path.name],
+            ['python3', demo_path.name],
             check=True,
             cwd=tmpdir,
             env=dict(
