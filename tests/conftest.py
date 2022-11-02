@@ -1,8 +1,10 @@
 import random
 import time
 from os.path import dirname
+from pathlib import Path
 from subprocess import Popen
-from typing import Any, Iterator
+from tempfile import TemporaryDirectory
+from typing import Any, Iterable, Iterator
 
 import pytest
 
@@ -12,6 +14,12 @@ def demo_service() -> Iterator[Any]:
     from .demo_service import service
 
     yield service
+
+
+@pytest.fixture(scope='function')
+def tmppath() -> Iterable[Path]:
+    with TemporaryDirectory() as tmpdir:
+        yield Path(tmpdir)
 
 
 @pytest.fixture
