@@ -63,7 +63,6 @@ def _generateClientClass(
     )
 
     # add an dispatch() function that is used for all methods
-    cls.alsoImportPy('typing')
     dispatchfn = cls.createMethod(
         '_dispatch',
         unionof(T_ApiFailure, CrossAny()),
