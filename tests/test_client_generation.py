@@ -1,51 +1,65 @@
 from pathlib import Path
-from tests.scenarios import assert_contains_text, assert_eq, assert_isinstance
 
 import pytest
-from paradox.expressions import PanCall, pan
+from paradox.expressions import PanCall, PanDict, pan
 from paradox.generate.statements import HardCodedStatement
 from paradox.output import Script
+from paradox.typing import CrossAny, CrossStr
 
 from tests.conftest import DemoRunner
-from tests.demo_service.execute import (run_php_demo, run_python_demo,
-                                        run_typescript_demo)
+from tests.demo_service.execute import run_python_demo, run_typescript_demo
 from tests.demo_service.generate import (
-    generate_demo_service_php_client, generate_demo_service_python_client,
+    generate_demo_service_python_client,
     generate_demo_service_typescript_client)
+from tests.scenarios import (assert_contains_text, assert_eq,
+                             assert_isinstance, assert_islist)
 
 DEMO_SERVICE_ROOT = Path(__file__).parent / 'demo_service'
 
 
-@pytest.mark.parametrize('flavour', ['abstract'])
-def test_generate_php_client(
-    flavour: str,
-    tmppath: Path,
-    demo_service_port: int,
+def test_generated_client(
+    demo_runner: DemoRunner,
 ) -> None:
-    generate_demo_service_php_client(tmppath, flavour=flavour)
+    if demo_runner.lang != 'php':
+        return
 
-    demo_script = '''
-        <?php
+    s = Script()
 
-        require 'get_client.php';
+    s.also(HardCodedStatement(
+        php='require "get_client.php";',
+        python=None,
+    ))
 
-        $service = get_client();
-        $rev = $service->get_reversed("Hello world");
-        assert($rev === "dlrow olleH");
+    s.remark('load the client')
+    s.alsoImportPy('get_client', ['get_client'])
+    v_client = s.alsoDeclare('v_client', 'no_type', PanCall('get_client'))
 
-        $pets = $service->get_pets();
-        assert(is_array($pets));
-        assert(count($pets) === 2);
-        assert($pets[0] instanceof Pet);
-        assert($pets[1] instanceof Pet);
-        assert($pets[0]->name === "Basil");
-        assert($pets[1]->name === "Billy");
+    s.remark('simple string-reversal endpoint')
+    assert_eq(
+        s,
+        PanCall(v_client.getprop('get_reversed'), pan("Hello world")),
+        "dlrow olleH",
+    )
 
-        $check = $service->check_pets(['basil' => $pets[0], 'billy' => $pets[1]]);
-        assert($check === 'pets_ok!');
-        '''
+    s.remark('method with a more complex return type')
+    v_pets = s.alsoDeclare('pets', CrossAny(), PanCall(v_client.getprop('get_pets')))
+    assert_islist(s, v_pets, size=2)
+    assert_isinstance(s, v_pets.getindex(0), 'Pet')
+    assert_isinstance(s, v_pets.getindex(1), 'Pet')
+    assert_eq(s, v_pets.getindex(0).getprop('name'), 'Basil')
+    assert_eq(s, v_pets.getindex(1).getprop('name'), 'Billy')
 
-    run_php_demo(demo_script, root=tmppath, demo_service_port=demo_service_port)
+    s.remark('Testing a method that *receives* a complex argument type')
+    v_check_arg = PanDict({}, CrossStr(), CrossAny())
+    v_check_arg.addPair(pan('basil'), v_pets.getindex(0))
+    v_check_arg.addPair(pan('billy'), v_pets.getindex(1))
+    v_check = s.alsoDeclare('check', 'no_type', PanCall(
+        v_client.getprop('check_pets'),
+        v_check_arg,
+    ))
+    assert_eq(s, v_check, 'pets_ok!')
+
+    demo_runner.run_demo(s)
 
 
 @pytest.mark.parametrize('flavour', ['abstract', 'requests'])
