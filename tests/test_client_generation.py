@@ -5,7 +5,7 @@ from pathlib import Path
 from subprocess import run
 from tempfile import TemporaryDirectory
 from textwrap import dedent
-from typing import Any, Iterable, List, Union
+from typing import Any, List, Union
 
 import pytest
 
@@ -15,12 +15,6 @@ DEMO_SERVICE_ROOT = Path(__file__).parent / 'demo_service'
 def _run_php(script: str, **kwargs: Any) -> None:
     cmd = ['php', '-d', 'assert.exception=1', script]
     run(cmd, **kwargs, check=True)
-
-
-@pytest.fixture(scope='function')
-def tmppath() -> Iterable[Path]:
-    with TemporaryDirectory() as tmpdir:
-        yield Path(tmpdir)
 
 
 @pytest.mark.parametrize('flavour', ['abstract'])
