@@ -1,5 +1,6 @@
+import base64
 import os
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, Optional, Tuple, Union
 
 import requests
 from generated_client import (ApiBroken, ApiFailure, ApiOutage,
@@ -7,8 +8,13 @@ from generated_client import (ApiBroken, ApiFailure, ApiOutage,
 
 
 class RequestsPythonClient(ClientBase):
+    _auth: Optional[Tuple[str, str]] = None
+
     def __init__(self) -> None:
         self._session = requests.Session()
+
+    def setAuth(self, username: str, password: str) -> None:
+        self._auth = (username, password)
 
     def _dispatch(
         self,
@@ -23,6 +29,9 @@ class RequestsPythonClient(ClientBase):
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         }
+        if self._auth is not None:
+            authstr: str = base64.b64encode(':'.join(self._auth).encode('utf-8')).decode('utf-8')
+            headers['Authorization'] = 'Basic ' + authstr
         result = self._session.post(url, json=params, headers=headers)
         if result.status_code == 401:
             return ApiUnauthorized(
