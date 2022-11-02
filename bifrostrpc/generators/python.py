@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Literal, Tuple
 
 from paradox.expressions import (PanCall, PanStringBuilder, PanVar, exacteq_,
                                  not_, pan, pandict, pyexpr)
@@ -31,6 +31,7 @@ def generateClient(
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
     flavour: Flavour,
+    auth_mechanism: Literal['session', 'http_basic'],
 ) -> None:
     dest.add_file_comment(HEADER)
 
@@ -50,6 +51,7 @@ def generateClient(
         funcspecs,
         adv=adv,
         flavour=flavour,
+        auth_mechanism=auth_mechanism,
     ))
 
 
@@ -59,6 +61,7 @@ def _generateClientClass(
     *,
     adv: Advanced,
     flavour: Flavour,
+    auth_mechanism: Literal['session', 'http_basic'],
 ) -> ClassSpec:
     cls = ClassSpec(
         classname,
