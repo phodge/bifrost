@@ -1,7 +1,7 @@
-import {ClientBase} from './generated_methods';
-import {ApiFailure} from './generated_methods';
-import {ApiOutage} from './generated_methods';
-import {ApiBroken} from './generated_methods';
+import {ClientBase} from './generated_client';
+import {ApiFailure} from './generated_client';
+import {ApiOutage} from './generated_client';
+import {ApiBroken} from './generated_client';
 
 
 export class DemoClient extends ClientBase {

@@ -1,9 +1,12 @@
+from pathlib import Path
 from typing import Dict, List
 
 from flask import Flask
 
 from bifrostrpc import BifrostRPCService
 from tests.scenarios.pets import Pet
+
+DEMO_SERVICE_ROOT = Path(__file__).parent
 
 service = BifrostRPCService()
 
