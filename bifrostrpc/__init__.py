@@ -147,6 +147,7 @@ class BifrostRPCService:
         modulepath: Path,
         classname: str,
         flavour: Flavour,
+        auth_mechanism: Literal['session', 'http_basic'],
     ) -> None:
         # pylint: disable=cyclic-import
         from bifrostrpc.generators.python import generateClient
@@ -159,6 +160,7 @@ class BifrostRPCService:
             funcspecs=[(k, self._getTypeSpec(k)) for k in self._targets],
             adv=self._adv,
             flavour=flavour,
+            auth_mechanism=auth_mechanism,
         )
 
         # TODO: turn pretty on when paradox adds support
