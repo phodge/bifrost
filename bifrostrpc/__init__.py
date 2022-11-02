@@ -122,7 +122,7 @@ class BifrostRPCService:
         modulepath: Path,
         classname: str,
         *,
-        npmroot: Path,
+        npmroot: Path,  # pylint: disable=unused-argument
         flavour: Literal['abstract'],
     ) -> None:
         # pylint: disable=cyclic-import
