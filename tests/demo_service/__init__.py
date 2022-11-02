@@ -1,9 +1,11 @@
+# pylint: disable=unnecessary-lambda
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Literal, Union
 
-from flask import Flask
+from flask import Flask, session
 
-from bifrostrpc import BifrostRPCService
+from bifrostrpc import AuthFailure, BifrostRPCService
 from tests.scenarios.pets import Pet
 
 DEMO_SERVICE_ROOT = Path(__file__).parent
@@ -15,7 +17,22 @@ class NoLogin:
     pass
 
 
+@dataclass
+class SessionUser:
+    username: str
+
+
+def get_session_user() -> SessionUser:
+    try:
+        username = session['current_user']
+    except KeyError:
+        raise AuthFailure('Not logged in')
+
+    return SessionUser(username)
+
+
 service.addAuthType(NoLogin, lambda: NoLogin())
+service.addAuthType(SessionUser, get_session_user)
 service.addDataclass(Pet)
 
 
@@ -53,5 +70,32 @@ def check_pets(_: NoLogin, pets: Dict[str, Pet]) -> str:
     return "pets_ok!"
 
 
+@service.rpcmethod
+def login(_: NoLogin, username: str, password: str) -> Union[Literal[True], str]:
+    if username == 'neo' and password == 'trinity':
+        session['current_user'] = 'the_one'
+        return True
+
+    if username == '':
+        return 'Username was empty'
+
+    if password == '':
+        return 'Password was empty'
+
+    return 'Invalid username or password'
+
+
+@service.rpcmethod
+def whoami(user: SessionUser) -> str:
+    return user.username
+
+
+@service.rpcmethod
+def logout(_: NoLogin) -> None:
+    session.pop('current_user', None)
+
+
 app = Flask('tests.demo_service')
 app.register_blueprint(service.get_flask_blueprint('demo_service', 'tests.demo_service'))
+# this is required for session usage
+app.secret_key = 'unit_test_secret'

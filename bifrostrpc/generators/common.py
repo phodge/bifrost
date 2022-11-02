@@ -35,3 +35,15 @@ def appendFailureModeClasses(dest: AcceptsStatements) -> None:
     c_ApiBroken.addPythonBaseClass('ApiFailure')
     c_ApiBroken.setPHPParentClass('ApiFailure')
     c_ApiBroken.setTypeScriptParentClass('ApiFailure')
+
+    c_ApiUnauthorized = dest.also(ClassSpec(
+        'ApiUnauthorized',
+        tsexport=True,
+        docstring=[
+            'returned (not thrown) by api methods when valid authorization is'
+            ' not provided',
+        ]
+    ))
+    c_ApiUnauthorized.addPythonBaseClass('ApiFailure')
+    c_ApiUnauthorized.setPHPParentClass('ApiFailure')
+    c_ApiUnauthorized.setTypeScriptParentClass('ApiFailure')

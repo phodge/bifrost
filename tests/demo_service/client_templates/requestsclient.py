@@ -2,10 +2,14 @@ import os
 from typing import Any, Callable, Dict, Union
 
 import requests
-from generated_client import ApiBroken, ApiFailure, ApiOutage, ClientBase
+from generated_client import (ApiBroken, ApiFailure, ApiOutage,
+                              ApiUnauthorized, ClientBase)
 
 
 class RequestsPythonClient(ClientBase):
+    def __init__(self) -> None:
+        self._session = requests.Session()
+
     def _dispatch(
         self,
         method: str,
@@ -19,7 +23,11 @@ class RequestsPythonClient(ClientBase):
             'Accept': 'application/json',
             'Content-Type': 'application/json',
         }
-        result = requests.post(url, json=params, headers=headers)
+        result = self._session.post(url, json=params, headers=headers)
+        if result.status_code == 401:
+            return ApiUnauthorized(
+                f'HTTP 401 Unauthorized: {result.text}'
+            )
         if result.status_code != 200:
             # TODO: return ApiBroken instead when appropriate
             # TODO: have more descriptive errors for various types of errors

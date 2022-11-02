@@ -83,6 +83,15 @@ def _generateClientClass(
         p_host = cls.addProperty('host', str, initarg=True, tsreadonly=True)
         p_port = cls.addProperty('port', int, initarg=True, tsreadonly=True)
 
+        # we need to initialise a requests.Session instance so that HTTP sessions and connection
+        # pooling are available
+        cls.alsoImportPy('requests')
+        p_session = cls.addProperty(
+            '_session',
+            CrossCustomType(python='requests.Session'),
+            default=PanCall('requests.Session'),
+        )
+
         urlexpr = PanStringBuilder([
             pan('http://'),
             p_host,
@@ -98,12 +107,22 @@ def _generateClientClass(
         }))
         dispatchfn.alsoImportPy('requests')
         v_result = dispatchfn.alsoDeclare('result', "no_type", PanCall(
-            'requests.post',
+            p_session.getprop('post'),
             v_url,
             json=v_params,
             headers=v_headers,
         ))
         statuscodeexpr = v_result.getprop('status_code', type=CrossAny())
+
+        # return ApiUnauthorized when 401 response received
+        with dispatchfn.withCond(exacteq_(statuscodeexpr, 401)) as cond:
+            cond.alsoReturn(PanCall('ApiUnauthorized', PanStringBuilder([
+                pan('Unexpected HTTP '),
+                statuscodeexpr,
+                pan(' response from rpc server: '),
+                v_result.getprop('text'),
+            ])))
+
         # TODO: return ApiBroken instead when appropriate
         # TODO: have more descriptive errors for various kinds of HTTP responses
         with dispatchfn.withCond(not_(exacteq_(statuscodeexpr, 200))) as cond:

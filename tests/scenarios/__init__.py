@@ -88,3 +88,13 @@ def assert_true(context: AcceptsStatements, expr: PanExpr) -> None:
         python=f'assert {expr.getPyExpr()[0]}',
         php=f'assert({expr.getPHPExpr()[0]});',
     ))
+
+
+def assert_contains_text(context: AcceptsStatements, haystack: PanExpr, needle: str) -> None:
+    haystackphp = haystack.getPHPExpr()[0]
+    needlephp = pan(needle).getPHPExpr()[0]
+    context.alsoImportPy('re')
+    context.also(HardCodedStatement(
+        python=f'assert re.search(r{needle!r}, {haystack.getPyExpr()[0]})',
+        php=f'assert(strpos({haystackphp}, {needlephp}) !== false);',
+    ))

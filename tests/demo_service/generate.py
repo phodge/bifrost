@@ -30,7 +30,11 @@ def generate_demo_service_php_client(
             require 'demo_curl_client.php';
 
             function get_client() {
-                return new DemoCurlClient('127.0.0.1', intval(getenv('DEMO_SERVICE_PORT')));
+                return new DemoCurlClient(
+                    '127.0.0.1',
+                    intval(getenv('DEMO_SERVICE_PORT')),
+                    dirname(__FILE__) . '/cookies.txt'
+                );
             }
             '''
     else:
