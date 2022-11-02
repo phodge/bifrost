@@ -1,14 +1,20 @@
 <?php
 
-class DemoCurlClient extends TestClient {
+class DemoCurlClient extends ClientBase {
+    private $host;
+    private $port;
+
+    public function __construct($host, $port) {
+        $this->host = $host;
+        $this->port = $port;
+    }
+
     public function _dispatch(
         string $method,
         array $params,
         $converter_name
     ) {
-        $port = intval(getenv('DEMO_SERVICE_PORT'));
-        $host = '127.0.0.1';
-        $url = "http://{$host}:{$port}/api.v1/call/{$method}";
+        $url = "http://{$this->host}:{$this->port}/api.v1/call/{$method}";
         $headers = [
             'Accept: application/json',
             'Content-Type: application/json',
