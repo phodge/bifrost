@@ -12,11 +12,6 @@ import pytest
 DEMO_SERVICE_ROOT = Path(__file__).parent / 'demo_service'
 
 
-def _run_php(script: str, **kwargs: Any) -> None:
-    cmd = ['php', '-d', 'assert.exception=1', script]
-    run(cmd, **kwargs, check=True)
-
-
 @pytest.mark.parametrize('flavour', ['abstract'])
 def test_generate_php_client(flavour: str, demo_service: Any, demo_service_port: int) -> None:
     with TemporaryDirectory() as tmpdir:
