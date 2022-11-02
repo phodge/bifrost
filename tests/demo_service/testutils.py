@@ -44,6 +44,9 @@ def generate_demo_service_php_client(
                 );
             }
             '''
+    elif flavour == 'curl':
+        service.generatePHPClient(generated_client_path, 'ClientBase', flavour='curl')
+        raise Exception("TODO: what is the get_client_script?")  # noqa
     else:
         raise Exception(f"Unexpected flavour {flavour!r}")
 
