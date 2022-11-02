@@ -4,9 +4,10 @@ class DemoCurlClient extends ClientBase {
     private $host;
     private $port;
 
-    public function __construct($host, $port) {
+    public function __construct($host, $port, $cookiejar) {
         $this->host = $host;
         $this->port = $port;
+	$this->cookiejar = $cookiejar;
     }
 
     public function _dispatch(
@@ -25,6 +26,11 @@ class DemoCurlClient extends ClientBase {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+	// this is required if we want to use HTTP sessions
+	curl_setopt($ch, CURLOPT_COOKIEJAR, $this->cookiejar);
+	curl_setopt($ch, CURLOPT_COOKIEFILE, $this->cookiejar);
+
         $result = curl_exec($ch);
         if ($result === false) {
             $err = curl_error($ch);
@@ -32,6 +38,11 @@ class DemoCurlClient extends ClientBase {
         }
 
         $info = curl_getinfo($ch);
+
+	if ($info['http_code'] === 401) {
+            return new ApiUnauthorized("HTTP 401 Unauthorized: $result");
+	}
+
         if ($info['http_code'] !== 200) {
             # TODO: test this code path when we rework errors
             return new ApiBroken("Unexpected HTTP {$info['http_code']} response from rpc server: {$result}");

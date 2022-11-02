@@ -1,7 +1,12 @@
 from pathlib import Path
+from tests.scenarios import assert_contains_text, assert_eq, assert_isinstance
 
 import pytest
+from paradox.expressions import PanCall, pan
+from paradox.generate.statements import HardCodedStatement
+from paradox.output import Script
 
+from tests.conftest import DemoRunner
 from tests.demo_service.execute import (run_php_demo, run_python_demo,
                                         run_typescript_demo)
 from tests.demo_service.generate import (
@@ -108,3 +113,67 @@ def test_generate_typescript_client(
         '''
 
     run_typescript_demo(demo_script, root=tmppath, demo_service_port=demo_service_port)
+
+
+def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
+    if demo_runner.lang == 'typescript':
+        # XXX: Typescript test isn't strictly necessary here as browsers will support sessions by
+        # default
+        return
+
+    if demo_runner.lang not in ('python', 'php'):
+        raise Exception(f"Unexpected lang {demo_runner.lang!r}")
+
+    s = Script()
+
+    s.also(HardCodedStatement(
+        php='require "get_client.php";',
+        python=None,
+    ))
+
+    s.remark('load the client')
+    s.alsoImportPy('get_client', ['get_client'])
+    v_client = s.alsoDeclare('v_client', 'no_type', PanCall('get_client'))
+
+    s.remark('should return an ApiUnauthorized first')
+    s.alsoImportPy('generated_client', ['ApiUnauthorized'])
+    v_result = s.alsoDeclare('result', 'no_type', PanCall(v_client.getprop('whoami')))
+    s.also(HardCodedStatement(
+        php='var_export($result);',
+        python=None,
+    ))
+    assert_isinstance(s, v_result, 'ApiUnauthorized')
+    assert_contains_text(s, v_result.getprop('message'), 'Not logged in')
+
+    s.remark('try an invalid username/password')
+    assert_eq(
+        s,
+        PanCall(v_client.getprop('login'), pan("MrAnderson"), pan("secr3t")),
+        'Invalid username or password',
+    )
+
+    s.remark('try missing credentials')
+    assert_eq(
+        s,
+        PanCall(v_client.getprop('login'), pan(""), pan("secr3t")),
+        'Username was empty',
+    )
+
+    s.remark('confirm still not logged in')
+    s.alsoAssign(v_result, PanCall(v_client.getprop('whoami')))
+    assert_isinstance(s, v_result, 'ApiUnauthorized')
+    assert_contains_text(s, v_result.getprop('message'), 'Not logged in')
+
+    s.remark('now log in with correct credentials')
+    assert_eq(
+        s,
+        PanCall(v_client.getprop('login'), pan("neo"), pan("trinity")),
+        pan(True),
+    )
+    assert_eq(
+        s,
+        PanCall(v_client.getprop('whoami')),
+        pan('the_one'),
+    )
+
+    demo_runner.run_demo(s)

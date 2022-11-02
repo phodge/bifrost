@@ -5,19 +5,24 @@ from subprocess import run
 from textwrap import dedent
 from typing import List, Union
 
+from paradox.output import Script
+
 from tests.demo_service import DEMO_SERVICE_ROOT
 
 CLIENT_TEMPLATES_PATH = Path(__file__).parent / 'client_templates'
 
 
 def run_php_demo(
-    script: str,
+    script: Union[str, Script],
     *,
     root: Path,
     demo_service_port: int,
 ) -> None:
     demo_php = root / 'demo.php'
-    demo_php.write_text(dedent(script).lstrip())
+    if isinstance(script, Script):
+        script.write_to_path(demo_php, lang='php')
+    else:
+        demo_php.write_text(dedent(script).lstrip())
 
     run(
         ['php', '-d', 'assert.exception=1', 'demo.php'],
@@ -31,13 +36,16 @@ def run_php_demo(
 
 
 def run_python_demo(
-    script: str,
+    script: Union[str, Script],
     *,
     root: Path,
     demo_service_port: int,
 ) -> None:
     demo_py = root / 'demo.py'
-    demo_py.write_text(dedent(script))
+    if isinstance(script, Script):
+        script.write_to_path(demo_py, lang='python')
+    else:
+        demo_py.write_text(dedent(script))
 
     run(
         ['python3', demo_py.name],

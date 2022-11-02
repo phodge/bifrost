@@ -242,7 +242,7 @@ class BifrostRPCService:
                             f"{method}(): Authorization error"
                             f": factory for {name}: {t.__name__} returned a Falsy value."
                         )
-                        return make_response('Authorization error', 401)
+                        return make_response('Unknown authorization error', 401)
 
                     kwargs[name] = value
                     authorized = True
