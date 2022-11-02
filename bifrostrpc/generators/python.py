@@ -41,12 +41,18 @@ def generateClient(
         dest.also(getDataclassSpec(dc, adv=adv, lang='python', hoistcontext=dest))
 
     # generate function wrappers
-    dest.also(_generateClientClass(classname, funcspecs, adv, flavour))
+    dest.also(_generateClientClass(
+        classname,
+        funcspecs,
+        adv=adv,
+        flavour=flavour,
+    ))
 
 
 def _generateClientClass(
     classname: str,
     funcspecs: List[Tuple[str, FuncSpec]],
+    *,
     adv: Advanced,
     flavour: Flavour,
 ) -> ClassSpec:
