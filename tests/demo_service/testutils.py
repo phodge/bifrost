@@ -90,6 +90,8 @@ def generate_demo_service_python_client(
             generated_client_path,
             'ClientBase',
             flavour='abstract',
+            # prevents adding HTTP Auth stuff to the generated client
+            auth_mechanism='session',
         )
         get_client_script = dedent(
             '''
@@ -114,6 +116,7 @@ def generate_demo_service_python_client(
             generated_client_path,
             'GeneratedRequestsClient',
             flavour='requests',
+            auth_mechanism='session',
         )
         get_client_script = dedent(
             '''
