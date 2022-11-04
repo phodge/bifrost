@@ -36,6 +36,17 @@ def get_session_user() -> SessionUser:
     return SessionUser(username)
 
 
+# def get_authenticated_user() -> Optional[AuthUser]:
+#     if request.authorization is None:
+#         raise AuthFailure("No HTTP Authorization was provided")
+#
+#     if (request.authorization['username'] == 'neo'
+#             and request.authorization['password'] == 'trinity'):
+#         return AuthUser('the_one')
+#
+#     raise AuthFailure('Invalid username or password')
+
+
 service.addAuthType(NoLogin, lambda: NoLogin())
 service.addAuthType(SessionUser, get_session_user)
 service.addNewType(UserName)
