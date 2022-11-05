@@ -141,7 +141,6 @@ def _generateType(spec: TypeSpec, adv: Advanced) -> str:
 
     if isinstance(spec, LiteralTypeSpec):
         if spec.expectedType is bool:
-            raise Exception("TODO: test this code path")  # noqa
             return 'true' if spec.expected else 'false'  # pylint: disable=unreachable
 
         if spec.expectedType is int:
