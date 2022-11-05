@@ -177,3 +177,7 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     )
 
     demo_runner.run_demo(s)
+
+
+# TODO: also test
+# - ApiBroken / ApiOutage

@@ -95,6 +95,11 @@ def logout(_: NoLogin) -> None:
     session.pop('current_user', None)
 
 
+# TODO: test adding a new scalar type
+# TODO: test addInternalType()
+# TODO: test addExternalType()
+
+
 app = Flask('tests.demo_service')
 app.register_blueprint(service.get_flask_blueprint('demo_service', 'tests.demo_service'))
 # this is required for session usage
