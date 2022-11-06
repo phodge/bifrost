@@ -60,13 +60,16 @@ def run_python_demo(
 
 
 def run_typescript_demo(
-    script: str,
+    script: Union[str, Script],
     *,
     root: Path,
     demo_service_port: int,
 ) -> None:
     demo_ts = root / 'demo.ts'
-    demo_ts.write_text(dedent(script))
+    if isinstance(script, Script):
+        script.write_to_path(demo_ts, lang='typescript')
+    else:
+        demo_ts.write_text(dedent(script))
 
     # first we need to install Node libs (typescript etc)
     for filename in ['tsconfig.json', 'package.json', 'package-lock.json', 'assertlib.ts']:

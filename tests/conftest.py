@@ -10,7 +10,8 @@ from typing import Any, Iterable, Iterator, Literal, Tuple, Union, cast
 import pytest
 from paradox.output import Script
 
-from tests.demo_service.execute import run_php_demo, run_python_demo
+from tests.demo_service.execute import (run_php_demo, run_python_demo,
+                                        run_typescript_demo)
 from tests.demo_service.generate import (
     generate_demo_service_php_client, generate_demo_service_python_client,
     generate_demo_service_typescript_client)
@@ -45,7 +46,11 @@ class DemoRunner:
             run_python_demo(demo_script, root=self.where, demo_service_port=self.demo_service_port)
         elif self.lang == 'typescript':
             generate_demo_service_typescript_client(self.where, flavour=self.flavour)
-            raise NotImplementedError("TODO: finish this")
+            run_typescript_demo(
+                demo_script,
+                root=self.where,
+                demo_service_port=self.demo_service_port,
+            )
         else:
             raise Exception(f"Unexpected lang {self.lang!r}")
 
