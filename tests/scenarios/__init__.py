@@ -49,10 +49,19 @@ class Scenario(Protocol):
 def assert_eq(context: AcceptsStatements, expr1: PanExpr, expr2: Union[PanExpr, Pannable]) -> None:
     if not isinstance(expr2, PanExpr):
         expr2 = pan(expr2)
+
+    # XXX: this is unfortunately necessary where the we evaluate a PanExpr that contains an
+    # PanAwait but we're not actually going to use the PHP code that's generated
+    php = None
+    try:
+        php = f'assert(({expr1.getPHPExpr()[0]}) === ({expr2.getPHPExpr()[0]}));'
+    except NotSupportedError:
+        pass
+
     context.alsoImportTS('./assertlib', ['assert_eq'])
     context.also(HardCodedStatement(
         python=f'assert ({expr1.getPyExpr()[0]}) == ({expr2.getPyExpr()[0]})',
-        php=f'assert(({expr1.getPHPExpr()[0]}) === ({expr2.getPHPExpr()[0]}));',
+        php=php,
         typescript=f'assert_eq({expr1.getTSExpr()[0]}, {expr2.getTSExpr()[0]});',
     ))
 
