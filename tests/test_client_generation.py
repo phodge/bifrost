@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Union
 
-import pytest
 from paradox.expressions import (PanAwait, PanCall, PanDict, PanExpr, PanProp,
                                  pan)
 from paradox.generate.statements import FunctionSpec, HardCodedStatement
@@ -10,8 +9,6 @@ from paradox.output import Script
 from paradox.typing import CrossAny, CrossStr
 
 from tests.conftest import DemoRunner
-from tests.demo_service.execute import run_typescript_demo
-from tests.demo_service.generate import generate_demo_service_typescript_client
 from tests.scenarios import (assert_contains_text, assert_eq,
                              assert_isinstance, assert_islist)
 
