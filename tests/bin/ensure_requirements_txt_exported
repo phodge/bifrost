@@ -32,7 +32,7 @@ getcmd() {
     if [ "x$1" = "x-d" ]; then
         shift
         local root="$1"
-        echo " --dev -o ${root}requirements_dev.txt"
+        echo " --with dev -o ${root}requirements_dev.txt"
     else
         local root="$1"
         echo " -o ${root}requirements.txt"
