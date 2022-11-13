@@ -10,11 +10,10 @@ from typing import Any, Iterable, Iterator, Literal, Tuple, Union, cast
 import pytest
 from paradox.output import Script
 
-from tests.demo_service.execute import (run_php_demo, run_python_demo,
-                                        run_typescript_demo)
-from tests.demo_service.generate import (
+from tests.demo_service.testutils import (
     generate_demo_service_php_client, generate_demo_service_python_client,
-    generate_demo_service_typescript_client)
+    generate_demo_service_typescript_client, run_php_demo, run_python_demo,
+    run_typescript_demo)
 
 
 @pytest.fixture
