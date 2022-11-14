@@ -6,7 +6,7 @@ from paradox.expressions import (PanAwait, PanCall, PanDict, PanExpr, PanProp,
 from paradox.generate.statements import FunctionSpec, HardCodedStatement
 from paradox.interfaces import AcceptsStatements
 from paradox.output import Script
-from paradox.typing import CrossAny, CrossStr
+from paradox.typing import CrossAny, CrossCustomType, CrossStr, listof, unionof
 
 from tests.conftest import DemoRunner
 from tests.scenarios import (assert_contains_text, assert_eq,
@@ -65,10 +65,28 @@ def test_generated_client(
         "dlrow olleH",
     )
 
+    t_Pet = CrossCustomType(
+        python='Pet',
+        phplang='Pet',
+        phpdoc='Pet',
+        typescript='Pet',
+    )
+    t_ApiFailure = CrossCustomType(
+        python='ApiFailure',
+        phplang='ApiFailure',
+        phpdoc='ApiFailure',
+        typescript='ApiFailure',
+    )
+    s.alsoImportPy('generated_client', ['Pet', 'ApiFailure'])
+    s.alsoImportTS('./generated_client', ['Pet', 'ApiFailure'])
+
     ctx.remark('method with a more complex return type')
-    v_pets = ctx.alsoDeclare('pets', CrossAny(), await_call(v_client.getprop('get_pets')))
+    v_pets = ctx.alsoDeclare(
+        'pets',
+        unionof(listof(t_Pet), t_ApiFailure),
+        await_call(v_client.getprop('get_pets')),
+    )
     assert_islist(ctx, v_pets, size=2)
-    s.alsoImportPy('generated_client', ['Pet'])
     assert_isinstance(ctx, v_pets.getindex(0), 'Pet')
     assert_isinstance(ctx, v_pets.getindex(1), 'Pet')
     assert_eq(ctx, v_pets.getindex(0).getprop('name'), 'Basil')

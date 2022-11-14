@@ -94,10 +94,10 @@ def generate_demo_service_python_client(
         get_client_script = dedent(
             '''
             from requestsclient import RequestsPythonClient
-            def get_client():
+            def get_client() -> RequestsPythonClient:
                 return RequestsPythonClient()
             '''
-        )
+        ).lstrip()
     else:
         assert flavour == 'requests'
         service.generatePythonClient(
@@ -109,7 +109,7 @@ def generate_demo_service_python_client(
             '''
             import os
             from generated_client import GeneratedRequestsClient
-            def get_client():
+            def get_client() -> GeneratedRequestsClient:
                 return GeneratedRequestsClient(
                     host='127.0.0.1',
                     port=int(os.environ['DEMO_SERVICE_PORT']),
@@ -142,6 +142,20 @@ def run_python_demo(
             DEMO_SERVICE_PORT=str(demo_service_port),
             PYTHONPATH=CLIENT_TEMPLATES_PATH,
         ),
+    )
+
+
+def run_python_typecheck(root: Path) -> None:
+    # install the mypy.ini
+    shutil.copy(
+            DEMO_SERVICE_ROOT / 'client_templates' / 'mypy.ini',
+            root / 'mypy.ini'
+    )
+    run(
+        ['mypy', '.'],
+        cwd=root,
+        check=True,
+        env=dict(**os.environ, MYPYPATH=CLIENT_TEMPLATES_PATH),
     )
 
 

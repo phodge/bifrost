@@ -13,7 +13,7 @@ from paradox.output import Script
 from tests.demo_service.testutils import (
     generate_demo_service_php_client, generate_demo_service_python_client,
     generate_demo_service_typescript_client, run_php_demo, run_python_demo,
-    run_typescript_demo)
+    run_python_typecheck, run_typescript_demo)
 
 
 @pytest.fixture
@@ -43,6 +43,8 @@ class DemoRunner:
         elif self.lang == 'python':
             generate_demo_service_python_client(self.where, flavour=self.flavour)
             run_python_demo(demo_script, root=self.where, demo_service_port=self.demo_service_port)
+            # we also want to run mypy over the project
+            run_python_typecheck(self.where)
         elif self.lang == 'typescript':
             generate_demo_service_typescript_client(self.where, flavour=self.flavour)
             run_typescript_demo(
