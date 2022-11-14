@@ -98,6 +98,16 @@ def generate_demo_service_python_client(
                 return RequestsPythonClient()
             '''
         ).lstrip()
+
+        # Copy the prebuilt requestsclient into place.
+        #
+        # XXX: we had been importing it direct from client_templates dir, but
+        # mypy was getting super confused locally and not warning about type
+        # errors in this file, even in unit test scenarios
+        shutil.copy(
+            CLIENT_TEMPLATES_PATH / 'requestsclient.py',
+            root / 'requestsclient.py'
+        )
     else:
         assert flavour == 'requests'
         service.generatePythonClient(
@@ -137,11 +147,7 @@ def run_python_demo(
         ['python3', demo_py.name],
         check=True,
         cwd=root,
-        env=dict(
-            **os.environ,
-            DEMO_SERVICE_PORT=str(demo_service_port),
-            PYTHONPATH=CLIENT_TEMPLATES_PATH,
-        ),
+        env=dict(**os.environ, DEMO_SERVICE_PORT=str(demo_service_port)),
     )
 
 
@@ -155,7 +161,6 @@ def run_python_typecheck(root: Path) -> None:
         ['mypy', '.'],
         cwd=root,
         check=True,
-        env=dict(**os.environ, MYPYPATH=CLIENT_TEMPLATES_PATH),
     )
 
 
