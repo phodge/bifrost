@@ -1,7 +1,7 @@
 # pylint: disable=unnecessary-lambda
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Literal, Union
+from typing import Dict, List, Literal, NewType, Union
 
 from flask import Flask, session
 
@@ -11,6 +11,11 @@ from tests.scenarios.pets import Pet
 DEMO_SERVICE_ROOT = Path(__file__).parent
 
 service = BifrostRPCService()
+
+# test having a simple NewType
+# TODO: add a test to ensure the clients are applying utilising the NewType correctly and that
+# typechecking is working
+UserName = NewType('UserName', str)
 
 
 class NoLogin:
@@ -33,6 +38,7 @@ def get_session_user() -> SessionUser:
 
 service.addAuthType(NoLogin, lambda: NoLogin())
 service.addAuthType(SessionUser, get_session_user)
+service.addNewType(UserName)
 service.addDataclass(Pet)
 
 
@@ -86,8 +92,8 @@ def login(_: NoLogin, username: str, password: str) -> Union[Literal[True], str]
 
 
 @service.rpcmethod
-def whoami(user: SessionUser) -> str:
-    return user.username
+def whoami(user: SessionUser) -> UserName:
+    return UserName(user.username)
 
 
 @service.rpcmethod
@@ -95,7 +101,6 @@ def logout(_: NoLogin) -> None:
     session.pop('current_user', None)
 
 
-# TODO: test adding a new scalar type
 # TODO: test addInternalType()
 # TODO: test addExternalType()
 
