@@ -599,7 +599,23 @@ def _generateCrossType(
         if spec.typeName == "bool":
             return CrossBool()
 
-        raise Exception("unreachable")
+        # need to work out what primitives to use for php since it doesn't support custom types
+        phptype: Union[CrossStr, CrossNum, CrossBool]
+        if spec.scalarType is str:
+            phptype = CrossStr()
+        elif spec.scalarType is int:
+            phptype = CrossNum()
+        else:
+            assert spec.scalarType is bool
+            phptype = CrossBool()
+        phplang, phpdoc, _ = phptype.getPHPTypes()
+
+        return CrossCustomType(
+            python=spec.typeName,
+            phplang=phplang,
+            phpdoc=phpdoc,
+            typescript=spec.typeName,
+        )
 
     if isinstance(spec, ListTypeSpec):
         return CrossList(_generateCrossType(spec.itemSpec, adv))
