@@ -1,9 +1,10 @@
-from typing import Literal, Optional, Type, Union
+from typing import Literal, NewType, Optional, Type, Union
 
 import pytest
 
-from bifrostrpc.typing import (Advanced, LiteralTypeSpec, NullTypeSpec,
-                               ScalarTypeSpec, UnionTypeSpec, getTypeSpec)
+from bifrostrpc.typing import (Advanced, LiteralTypeSpec,
+                               NullTypeSpec, ScalarTypeSpec, UnionTypeSpec,
+                               getTypeSpec)
 
 
 @pytest.mark.parametrize('scalarType', [int, str, bool])
@@ -20,6 +21,31 @@ def test_getTypeSpec_scalar(scalarType: Union[Type[int], Type[str], Type[bool]])
     assert isinstance(spec2.variants[0], ScalarTypeSpec)
     assert isinstance(spec2.variants[1], NullTypeSpec)
     assert spec2.variants[0].scalarType is scalarType
+
+
+def test_getTypeSpec_NewType() -> None:
+    UserID = NewType('UserID', int)
+    UserName = NewType('UserName', str)
+
+    # first, verify that getTypeSpec() raises a TypeError for a NewType that isn't registered
+    with pytest.raises(TypeError, match="Can't resolve"):
+        getTypeSpec(UserID, adv=Advanced())
+
+    adv = Advanced()
+    adv.addNewType(UserID)
+    adv.addNewType(UserName)
+
+    spec1 = getTypeSpec(UserID, adv=adv)
+    assert isinstance(spec1, ScalarTypeSpec)
+    assert spec1.scalarType is int
+    assert spec1.originalType is UserID
+    assert spec1.typeName == 'UserID'
+
+    spec2 = getTypeSpec(UserName, adv=adv)
+    assert isinstance(spec2, ScalarTypeSpec)
+    assert spec2.scalarType is str
+    assert spec2.originalType is UserName
+    assert spec2.typeName == 'UserName'
 
 
 def test_getTypeSpec_union() -> None:
