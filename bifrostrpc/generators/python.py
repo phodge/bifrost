@@ -5,8 +5,8 @@ from paradox.expressions import (PanCall, PanStringBuilder, PanVar, exacteq_,
 from paradox.generate.statements import (ClassSpec, DictBuilderStatement,
                                          FunctionSpec)
 from paradox.output import Script
-from paradox.typing import (CrossAny, CrossCallable, CrossCustomType, dictof,
-                            unionof)
+from paradox.typing import (CrossAny, CrossCallable, CrossCustomType, CrossStr,
+                            dictof, unionof)
 
 from bifrostrpc import Flavour
 from bifrostrpc.generators import Names
@@ -33,6 +33,10 @@ def generateClient(
     flavour: Flavour,
 ) -> None:
     dest.add_file_comment(HEADER)
+
+    # add new types to top of file
+    for name, base in adv.getNewTypesAndBases():
+        dest.add_new_type(name, base)
 
     appendFailureModeClasses(dest)
 

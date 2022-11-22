@@ -115,6 +115,10 @@ class Advanced:
             resolvedType = _resolveNewType(nt, self)[0]
             yield name, resolvedType, self.childTypes.get(name, [])
 
+    def getNewTypesAndBases(self) -> Iterable[Tuple[str, CrossType]]:
+        for name, nt in self.newTypes.items():
+            yield name, _getNewTypeBaseCrossType(nt)
+
     def getExternalTypeDetails(self) -> Iterable[Tuple[str, Tuple[str, ]]]:
         for someType, (tsmodule, ) in self.externalTypes.items():
             yield someType.__name__, (tsmodule, )
@@ -325,6 +329,30 @@ def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
     # if it *is* a newtype, resolve it as well
     resolvedType, resolvedNames = _resolveNewType(cast(Any, someType).__supertype__, adv)
     return resolvedType, [someType.__name__] + resolvedNames
+
+
+def _getNewTypeBaseCrossType(nt: Any) -> CrossType:
+    if nt.__supertype__ is str:
+        return CrossStr()
+
+    if nt.__supertype__ is int:
+        return CrossNum()
+
+    if nt.__supertype__ is bool:
+        return CrossBool()
+
+    if _isnewtype(nt.__supertype__):
+        parentname = nt.__supertype__.__name__
+        return CrossCustomType(
+                python=parentname,
+                typescript=parentname,
+                # TODO: we *can* do better here - we can fully resolve the NewType into a scalar
+                # type and then use *that* as the type
+                phplang=None,
+                phpdoc="mixed",
+        )
+
+    raise Exception("TODO: implement this")  # noqa
 
 
 class ListTypeSpec(TypeSpec):
