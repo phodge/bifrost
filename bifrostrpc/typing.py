@@ -231,10 +231,7 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
 
     # NOTE: this doesn't work under python 3.7 or python 3.8
     if isinstance(realType, type(Literal)) or getattr(realType, '__origin__', None) is Literal:
-        if sys.version_info < (3, 7, 0):
-            args = realType.__values__
-        else:
-            args = realType.__args__
+        args = realType.__args__
 
         assert len(args) == 1
         value = args[0]
@@ -309,29 +306,6 @@ def _getActualTypeName(value: Any) -> str:
 
 def _resolveNewType(someType: Any, adv: Advanced) -> Tuple[Any, List[str]]:
     if not _isnewtype(someType):
-        if sys.version_info < (3, 7, 0):
-            # python 3.6 (the earliest python we support) doesn't have the ._name attributes we
-            # require below.
-            if someType is Any:
-                return someType, ['Any']
-
-            if isinstance(someType, type(Literal)):
-                return someType, ['Literal']
-
-            # FIXME:
-            # This is a pretty dirty hack - because python3.6 didn't have the ._name attribute yet,
-            # we have to poke into the __doc__ to try and figure out what kind of type we're
-            # looking at. This is prone to breaking with even just a minor python version update,
-            # but thankfully we only need it for the 3.6 series, which is now in security-fix-only
-            # mode (as per PEP 494)
-            if (
-                someType.__module__ == 'typing'
-                and someType.__doc__
-                and someType.__doc__.startswith('Union type;')
-            ):
-                # TODO: but does this work if you've wrapped it with a custom type?
-                return someType, ['Union']
-
         # TODO: accessing someType.__name__ like this doesn't work if someType is a
         # forward-declaration (a string containing the type name)
         try:
