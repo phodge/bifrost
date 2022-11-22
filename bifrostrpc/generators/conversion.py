@@ -582,10 +582,6 @@ def _getUnionConverterBlock(
 
         with withCatchTypeError(tryblock) as catchblock:
             catchblock.remark('ignore TypeError - contine on to next variant')
-            # TODO: is there a more language-agnostic way to insert the 'pass' statement for
-            # Python?
-            if lang == 'python':
-                catchblock.also(pyexpr('pass'))
 
     raiseTypeError(
         innercheck,
