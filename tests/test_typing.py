@@ -1,10 +1,11 @@
 from typing import Literal, NewType, Optional, Type, Union
 
 import pytest
+from paradox.typing import CrossBool, CrossCustomType, CrossNum, CrossStr
 
-from bifrostrpc.typing import (Advanced, LiteralTypeSpec,
-                               NullTypeSpec, ScalarTypeSpec, UnionTypeSpec,
-                               getTypeSpec)
+from bifrostrpc.typing import (Advanced, LiteralTypeSpec, NullTypeSpec,
+                               ScalarTypeSpec, UnionTypeSpec,
+                               _getNewTypeBaseCrossType, getTypeSpec)
 
 
 @pytest.mark.parametrize('scalarType', [int, str, bool])
@@ -102,3 +103,15 @@ def test_getTypeSpec_literal() -> None:
     assert isinstance(spec1, LiteralTypeSpec)
     assert spec1.expected == 5
     assert spec1.expectedType is int
+
+
+def test_getNewTypeBaseCrossType() -> None:
+    UserID = NewType('UserID', int)
+    AdminID = NewType('AdminID', UserID)
+
+    assert isinstance(_getNewTypeBaseCrossType(NewType('UserName', str)), CrossStr)
+    assert isinstance(_getNewTypeBaseCrossType(UserID), CrossNum)
+    assert isinstance(_getNewTypeBaseCrossType(NewType('UserActive', bool)), CrossBool)
+    assert isinstance(_getNewTypeBaseCrossType(AdminID), CrossCustomType)
+
+    # TODO: add tests/support for non-scalar NewTypes
