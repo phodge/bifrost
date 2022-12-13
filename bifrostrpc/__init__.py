@@ -265,7 +265,7 @@ class BifrostRPCService:
                 except ArgumentError as e:
                     errors = [e.args[0]]
                 else:
-                    def handle_err(msg: str):
+                    def handle_err(msg: str) -> None:
                         # TODO: raise a more specific exception type here
                         raise Exception(f"method response was invalid: {msg}")
 
