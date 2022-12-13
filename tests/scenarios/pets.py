@@ -12,6 +12,7 @@ class Pet:
     name: str
     species: Union[Literal['dog'], Literal['cat']]
     age: Optional[int]
+    can_play_fetch: bool
 
 
 class PET0(Scenario):
@@ -21,6 +22,7 @@ class PET0(Scenario):
         "name": "Billy",
         "species": "dog",
         "age": 8,
+        "can_play_fetch": True,
     }
 
     def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
@@ -35,6 +37,7 @@ class PET1(Scenario):
         "__dataclass__": "Pet",
         "name": "Basil",
         "species": "cat",
+        "can_play_fetch": False,
     }
 
     def add_assertions(self, context: AcceptsStatements, v: PanVar) -> None:
