@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from paradox.expressions import PanExpr
 
 
-ErrorList = List[str]
+ErrHandler = Callable[[str], None]
 ScalarTypes = Union[Type[str], Type[int], Type[bool]]
 
 
@@ -150,10 +150,10 @@ class FuncSpec:
             else:
                 self.argSpecs[name] = spec
 
-    def importArgs(self, args: Any, label: str, errors: ErrorList) -> Dict[str, Any]:
+    def importArgs(self, args: Any, label: str, onerr: ErrHandler) -> Dict[str, Any]:
         if not isinstance(args, dict):
             actualTypeName = _getActualTypeName(args)
-            errors.append(f'label must be a dict; got {actualTypeName} instead')
+            onerr(f'label must be a dict; got {actualTypeName} instead')
             return {}
 
         transformed = {}
@@ -163,16 +163,16 @@ class FuncSpec:
                 value = args[name]
             except KeyError:
                 # TODO: allow *not* providing values for optional arguments
-                errors.append(itemlabel + ' is required')
+                onerr(itemlabel + ' is required')
                 continue
 
-            transformed[name] = spec.getImported(value, itemlabel, errors)
+            transformed[name] = spec.getImported(value, itemlabel, onerr=onerr)
 
         # also warn about extra args
         for name in args:
             if name not in self.argSpecs:
                 itemlabel = f'{label}[{name!r}]'
-                errors.append(f'Unexpected argument {itemlabel}')
+                onerr(f'Unexpected argument {itemlabel}')
 
         return transformed
 
@@ -184,9 +184,10 @@ class FuncSpec:
         retval: Any,
         label: str,
         showdc: bool,
-        errors: ErrorList,
+        *,
+        onerr: ErrHandler,
     ) -> Any:
-        return self.retvalSpec.getExported(retval, label, showdc, errors)
+        return self.retvalSpec.getExported(retval, label, showdc, onerr=onerr)
 
     def getReturnSpec(self) -> 'TypeSpec':
         return self.retvalSpec
@@ -197,11 +198,11 @@ class TypeSpec(abc.ABC):
     Holds a type definition for an argument or return value.
     """
     @abc.abstractmethod
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
         ...
 
     @abc.abstractmethod
-    def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> Any:
+    def getExported(self, value: Any, label: str, showdc: bool, *, onerr: ErrHandler) -> Any:
         ...
 
 
@@ -286,16 +287,16 @@ def getTypeSpec(someType: Any, adv: Advanced) -> TypeSpec:
 
 
 class NullTypeSpec(TypeSpec):
-    def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> None:
+    def getExported(self, value: Any, label: str, showdc: bool, *, onerr: ErrHandler) -> None:
         if value is not None:
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be None; got {actualTypeName} instead')
+            onerr(f'{label} must be None; got {actualTypeName} instead')
         return value
 
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> None:
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
         if value is not None:
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be Null; got {actualTypeName} instead')
+            onerr(f'{label} must be Null; got {actualTypeName} instead')
         return value
 
 
@@ -359,33 +360,33 @@ class ListTypeSpec(TypeSpec):
     def __init__(self, itemSpec: TypeSpec):
         self.itemSpec = itemSpec
 
-    def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> List[Any]:
+    def getExported(self, value: Any, label: str, showdc: bool, *, onerr: ErrHandler) -> List[Any]:
         if isinstance(value, (str, bytes)):
             typeName = type(value).__name__
-            errors.append(f'Cowardly efusing to export {label} ({typeName}) as a list')
+            onerr(f'Cowardly efusing to export {label} ({typeName}) as a list')
             return [value]
 
         # TODO is this the best way to detect if value is iterable?
         try:
             iter_ = (i for i in value)
         except TypeError:
-            errors.append(f'{label} cannot be exported to a List as it is not iterable')
+            onerr(f'{label} cannot be exported to a List as it is not iterable')
             return [value]
 
         ret = []
         for idx, item in enumerate(iter_):
-            ret.append(self.itemSpec.getExported(item, f'{label}[{idx}]', showdc, errors))
+            ret.append(self.itemSpec.getExported(item, f'{label}[{idx}]', showdc, onerr=onerr))
         return ret
 
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> List[Any]:
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
         if type(value) is not list:  # pylint: disable=unidiomatic-typecheck
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be a list; got {actualTypeName} instead')
+            onerr(f'{label} must be a list; got {actualTypeName} instead')
             return value
 
         ret = []
         for idx, item in enumerate(value):
-            ret.append(self.itemSpec.getImported(item, f'{label}[{idx}]', errors))
+            ret.append(self.itemSpec.getImported(item, f'{label}[{idx}]', onerr=onerr))
         return ret
 
 
@@ -399,41 +400,47 @@ class UnionTypeSpec(TypeSpec):
         self,
         value: Any,
         label: str,
-        errors: ErrorList,
-        transformer: Callable[[TypeSpec, Any, str, ErrorList], Any],
+        onerr: ErrHandler,
+        transformer: Callable[[TypeSpec, Any, str, ErrHandler], Any],
     ) -> Any:
         # try each of the variant specs until we find one that works
-        allErrors: List[str] = []
+        all_variant_errors: List[str] = []
+
         for i, spec in enumerate(self.variants):
-            before = len(allErrors)
+            before = len(all_variant_errors)
+
+            def on_variant_error(msg: str) -> None:
+                all_variant_errors.append(msg)
+
             variantLabel = f'{label} (variant #{i})'
-            transformed = transformer(spec, value, variantLabel, allErrors)
-            if len(allErrors) == before:
+            transformed = transformer(spec, value, variantLabel, on_variant_error)
+            if len(all_variant_errors) == before:
                 # if there are no errors from this exporter, then use this transformed value
                 return transformed
 
         # if all specs produced errors, push all the errors along with a summary
         num = len(self.variants)
-        errors.append(f"{label} could not satisfy any of the union type's {num} variants")
-        errors.extend(allErrors)
+        onerr(f"{label} could not satisfy any of the union type's {num} variants")
+        for err in all_variant_errors:
+            onerr(err)
         return value
 
-    def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> Any:
+    def getExported(self, value: Any, label: str, showdc: bool, *, onerr: ErrHandler) -> Any:
         return self._process(
             value,
             label,
-            errors,
-            lambda spec, value, variantLabel, allErrors:
-                spec.getExported(value, variantLabel, showdc, allErrors)
+            onerr,
+            lambda spec, value, variantLabel, errhandler:
+                spec.getExported(value, variantLabel, showdc, onerr=errhandler)
         )
 
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
         return self._process(
             value,
             label,
-            errors,
-            lambda spec, value, variantLabel, allErrors:
-                spec.getImported(value, variantLabel, allErrors)
+            onerr,
+            lambda spec, value, variantLabel, errhandler:
+                spec.getImported(value, variantLabel, onerr=errhandler)
         )
 
 
@@ -445,32 +452,32 @@ class DictTypeSpec(TypeSpec):
         self.keySpec = keySpec
         self.valueSpec = valueSpec
 
-    def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> Any:
+    def getExported(self, value: Any, label: str, showdc: bool, *, onerr: ErrHandler) -> Any:
         if type(value) is not dict:  # pylint: disable=unidiomatic-typecheck
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be a dict; got {actualTypeName} instead')
+            onerr(f'{label} must be a dict; got {actualTypeName} instead')
             return value
 
         transformed: Dict[Any, Any] = {}
         for k, v in value.items():
             valuelabel = label + '[' + repr(k) + ']'
-            newKey = self.keySpec.getExported(k, label, showdc, errors)
-            newVal = self.valueSpec.getExported(v, valuelabel, showdc, errors)
+            newKey = self.keySpec.getExported(k, label, showdc, onerr=onerr)
+            newVal = self.valueSpec.getExported(v, valuelabel, showdc, onerr=onerr)
             transformed[newKey] = newVal
         return transformed
 
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
         if type(value) is not dict:  # pylint: disable=unidiomatic-typecheck
             # NOTE: we don't support importing dataclasses here because we're
             # not trying to convert sophisticated python types into primitive types
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be a dict; got {actualTypeName} instead')
+            onerr(f'{label} must be a dict; got {actualTypeName} instead')
             return value
 
         transformed: Dict[Any, Any] = {}
         for k, v in value.items():
-            newKey = self.keySpec.getImported(k, label, errors)
-            newVal = self.valueSpec.getImported(v, label + '[' + repr(k) + ']', errors)
+            newKey = self.keySpec.getImported(k, label, onerr=onerr)
+            newVal = self.valueSpec.getImported(v, label + '[' + repr(k) + ']', onerr=onerr)
             transformed[newKey] = newVal
         return transformed
 
@@ -483,10 +490,10 @@ class DataclassTypeSpec(TypeSpec):
         self.class_ = class_
         self.fieldSpecs = fieldSpecs
 
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
         if not isinstance(value, dict):
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be a dict; got {actualTypeName} instead')
+            onerr(f'{label} must be a dict; got {actualTypeName} instead')
             return value
 
         # TODO: type-check all fields
@@ -495,20 +502,20 @@ class DataclassTypeSpec(TypeSpec):
             try:
                 spec = self.fieldSpecs[k]
             except KeyError:
-                errors.append(f'{label} contains unexpected key {k!r}')
+                onerr(f'{label} contains unexpected key {k!r}')
                 continue
 
-            kwargs[k] = spec.getImported(v, f'{label}[{k!r}]', errors)
+            kwargs[k] = spec.getImported(v, f'{label}[{k!r}]', onerr=onerr)
 
         for f in self.fieldSpecs:
             if f not in kwargs:
                 # TODO: don't emit an error if the field has a default value
-                errors.append(f'{label} is missing field {f!r}')
+                onerr(f'{label} is missing field {f!r}')
 
         try:
             return self.class_(**kwargs)
         except TypeError as e:
-            errors.append(f'{label} error constructing {self.class_.__name__}: {e}')
+            onerr(f'{label} error constructing {self.class_.__name__}: {e}')
 
         return None
 
@@ -517,12 +524,13 @@ class DataclassTypeSpec(TypeSpec):
         value: Any,
         label: str,
         showdc: bool,
-        errors: ErrorList,
+        *,
+        onerr: ErrHandler,
     ) -> Dict[str, Any]:
         if not isinstance(value, self.class_):
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be an instance of {self.class_.__name__}'
-                          f'; got {actualTypeName} instead')
+            onerr(f'{label} must be an instance of {self.class_.__name__}'
+                  f'; got {actualTypeName} instead')
             return value
 
         # NOTE: you *could* use dataclasses.asdict() to recursively turn `target` into a dict, but
@@ -530,7 +538,7 @@ class DataclassTypeSpec(TypeSpec):
         ret = {}
         for name, spec in self.fieldSpecs.items():
             fieldLabel = f'{label}.{name}'
-            ret[name] = spec.getExported(getattr(value, name), fieldLabel, showdc, errors)
+            ret[name] = spec.getExported(getattr(value, name), fieldLabel, showdc, onerr=onerr)
         if showdc:
             ret['__dataclass__'] = self.class_.__name__
         return ret
@@ -553,17 +561,17 @@ class ScalarTypeSpec(TypeSpec):
         self.typeName = typeName
         self.originalType = originalType
 
-    def getExported(self, value: Any, label: str, showdc: bool, errors: ErrorList) -> Any:
+    def getExported(self, value: Any, label: str, showdc: bool, *, onerr: ErrHandler) -> Any:
         # NOTE: for scalar values we don't actually transform (heaven forbid we should cast our
         # ints to strs automatically like PHP); we just warn on incorrect types
         if not isinstance(value, self.scalarType):
             actualTypeName = _getActualTypeName(value)
-            errors.append(f'{label} must be of type {self.typeName}; got {actualTypeName} instead')
+            onerr(f'{label} must be of type {self.typeName}; got {actualTypeName} instead')
         return value
 
     # getImported() has the same implementation as getExported()
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
-        return self.getExported(value, label, False, errors)
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
+        return self.getExported(value, label, False, onerr=onerr)
 
     def getMatchExpr(self, value: "PanExpr") -> "PanExpr":
         from paradox.expressions import isbool, isint, isstr
@@ -597,19 +605,20 @@ class LiteralTypeSpec(TypeSpec):
         value: Any,
         label: str,
         showdc: bool,
-        errors: ErrorList,
+        *,
+        onerr: ErrHandler,
     ) -> Union[str, int, bool]:
         if not (isinstance(value, self.expectedType) and value == self.expected):
             if type(value) in (str, int, bool, None):
                 show = repr(value)
             else:
                 show = _getActualTypeName(value)
-            errors.append(f'{label} must be exactly {self.expected!r}; got {show} instead')
+            onerr(f'{label} must be exactly {self.expected!r}; got {show} instead')
         return value
 
     # getImported() has the same implementation as getExported()
-    def getImported(self, value: Any, label: str, errors: ErrorList) -> Any:
-        return self.getExported(value, label, False, errors)
+    def getImported(self, value: Any, label: str, *, onerr: ErrHandler) -> Any:
+        return self.getExported(value, label, False, onerr=onerr)
 
 
 def _generateCrossType(

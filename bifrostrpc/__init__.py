@@ -225,7 +225,7 @@ class BifrostRPCService:
                 errors: List[str] = []
                 # import the data - this will type-check the whole thing and turn dicts into
                 # dataclasses as necessary, etc
-                kwargs = spec.importArgs(provided, 'body', errors)
+                kwargs = spec.importArgs(provided, 'body', lambda err: errors.append(err))
                 if errors:
                     return make_response('.\n'.join(errors) + '.', 400)
 
@@ -268,7 +268,12 @@ class BifrostRPCService:
                     # sanity-check the return value and convert fancy types (dataclasses) to plain
                     # dicts
                     errors = []
-                    jsonSafe = spec.exportRetval(result, '<retval>', showdataclasses, errors)
+                    jsonSafe = spec.exportRetval(
+                        result,
+                        '<retval>',
+                        showdataclasses,
+                        lambda msg: errors.append(msg),
+                    )
 
                 if errors:
                     # TODO: in production mode we  need to log errors rather than sending them to
