@@ -50,8 +50,8 @@ def get_reversed(_: NoLogin, input_: str) -> str:
 @service.rpcmethod
 def get_pets(_: NoLogin) -> List[Pet]:
     return [
-            Pet(name="Basil", species="dog", age=7),
-            Pet(name="Billy", species="dog", age=10),
+            Pet(name="Basil", species="dog", age=7, can_play_fetch=True),
+            Pet(name="Billy", species="dog", age=10, can_play_fetch=False),
     ]
 
 
