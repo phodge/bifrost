@@ -169,6 +169,7 @@ class BifrostRPCService:
         filepath: Path,
         classname: str,
         flavour: Literal['abstract'],
+        on_error: Literal['return', 'raise'] = 'return',
     ) -> None:
         # pylint: disable=cyclic-import
         from bifrostrpc.generators.php import generateClient
@@ -181,6 +182,7 @@ class BifrostRPCService:
             funcspecs=[(k, self._getTypeSpec(k)) for k in self._targets],
             adv=self._adv,
             flavour=flavour,
+            on_error=on_error,
         )
 
         # TODO: turn pretty on when paradox adds support

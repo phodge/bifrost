@@ -2,14 +2,22 @@ from paradox.generate.statements import ClassSpec
 from paradox.interfaces import AcceptsStatements
 
 
-def appendFailureModeClasses(dest: AcceptsStatements) -> None:
+def appendFailureModeClasses(dest: AcceptsStatements, as_exception: bool) -> None:
     dest.remark('failure modes')
     af = dest.also(ClassSpec(
         'ApiFailure',
         docstring=['parent class of all failure modes'],
         tsexport=True,
     ))
-    af.addProperty('message', str, initarg=True)
+    if as_exception:
+        af.setPHPParentClass('Exception')
+        af.addPythonBaseClass('Exception')
+        # TODO: extending javascript's built-in Error class is not trivial and will require
+        # specialised logic in the paradox project:
+        # https://bobbyhadz.com/blog/typescript-extend-error-class
+        af.setTypeScriptParentClass('__UNSUPPORTED__')
+    else:
+        af.addProperty('message', str, initarg=True)
     c_ApiOutage = dest.also(ClassSpec(
         'ApiOutage',
         tsexport=True,

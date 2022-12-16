@@ -38,7 +38,7 @@ def generateClient(
 ) -> None:
     dest.add_file_comment(HEADER)
 
-    appendFailureModeClasses(dest)
+    appendFailureModeClasses(dest, as_exception=False)
     _importExternalTypes(dest, adv)
     _generateAdvancedTypes(dest, adv)
     _generateWrappers(dest, classname, funcspecs, adv=adv, flavour=flavour)
