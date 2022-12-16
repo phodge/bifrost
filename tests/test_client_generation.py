@@ -133,6 +133,7 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     s.alsoImportPy('get_client', ['get_client'])
     v_client = s.alsoDeclare('v_client', 'no_type', PanCall('get_client'))
 
+    s.blank()
     s.remark('should return an ApiUnauthorized first')
     s.alsoImportPy('generated_client', ['ApiUnauthorized'])
     v_result = s.alsoDeclare('result', 'no_type', PanCall(v_client.getprop('whoami')))
@@ -143,6 +144,7 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     assert_isinstance(s, v_result, 'ApiUnauthorized')
     assert_contains_text(s, v_result.getprop('message'), 'Not logged in')
 
+    s.blank()
     s.remark('try an invalid username/password')
     assert_eq(
         s,
@@ -157,6 +159,7 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
         'Username was empty',
     )
 
+    s.blank()
     s.remark('confirm still not logged in')
     s.alsoAssign(v_result, PanCall(v_client.getprop('whoami')))
     assert_isinstance(s, v_result, 'ApiUnauthorized')
