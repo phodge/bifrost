@@ -38,8 +38,15 @@ class DemoRunner:
 
     def run_demo(self, demo_script: Union[str, Script]) -> None:
         if self.lang == 'php':
-            generate_demo_service_php_client(self.where, flavour=self.flavour)
-            run_php_demo(demo_script, root=self.where, demo_service_port=self.demo_service_port)
+            generate_demo_service_php_client(
+                self.where,
+                flavour=self.flavour,
+            )
+            run_php_demo(
+                demo_script,
+                root=self.where,
+                demo_service_port=self.demo_service_port,
+            )
         elif self.lang == 'python':
             generate_demo_service_python_client(self.where, flavour=self.flavour)
             run_python_demo(demo_script, root=self.where, demo_service_port=self.demo_service_port)
