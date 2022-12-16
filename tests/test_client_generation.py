@@ -23,8 +23,12 @@ def _assert_exception_message(
 ) -> None:
     msgexpr: PanExpr
     if demo_runner.lang in 'php':
-        msgexpr = v_caught.getprop('message')
+        if demo_runner.errors == 'return':
+            msgexpr = v_caught.getprop('message')
+        else:
+            msgexpr = PanCall(v_caught.getprop('getMessage'))
     elif demo_runner.lang == 'python':
+        assert demo_runner.errors == 'return'
         msgexpr = v_caught.getprop('message')
     elif demo_runner.lang == 'typescript':
         # not currently used
@@ -42,6 +46,23 @@ def _expect_error(
     errclass: str,
     expectedmsg: str,
 ) -> None:
+    if demo_runner.errors == 'raise':
+        with s.withTryBlock() as tryblock:
+            tryblock.also(expr)
+            tryblock.alsoRaise(
+                # TODO: 'Exception' is the wrong constructor for TypeScript/JS and won't work
+                ctor='Exception',
+                msg=f'ERROR: {errclass} was not thrown',
+            )
+            v_err = PanVar('e', type=CrossAny())
+            with tryblock.withCatchBlock2(
+                v_err,
+                pyclass=errclass,
+                phpclass=errclass,
+                tsclass=errclass,
+            ) as catchblock:
+                _assert_exception_message(demo_runner, catchblock, v_err, expectedmsg)
+    else:
         v_result = s.alsoDeclare('result', 'no_type', expr)
         assert_isinstance(s, v_result, errclass)
         _assert_exception_message(demo_runner, s, v_result, expectedmsg)
@@ -147,6 +168,7 @@ def test_generated_client(
 
 def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     if demo_runner.lang == 'typescript':
+        # TODO: we might need to implement this test anyway so that we can test raise vs return
         # XXX: Typescript test isn't strictly necessary here as browsers will support sessions by
         # default
         return
@@ -166,7 +188,7 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     v_client = s.alsoDeclare('v_client', 'no_type', PanCall('get_client'))
 
     s.blank()
-    s.remark('should return an ApiUnauthorized first')
+    s.remark('should return/raise an ApiUnauthorized first')
     s.alsoImportPy('generated_client', ['ApiUnauthorized'])
     _expect_error(
         demo_runner,

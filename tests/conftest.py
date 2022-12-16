@@ -33,6 +33,7 @@ def tmppath() -> Iterable[Path]:
 class DemoRunner:
     lang: Literal['php', 'python', 'typescript']
     flavour: Literal['abstract', 'curl', 'requests']
+    errors: Literal['return', 'raise']
     where: Path
     demo_service_port: int
 
@@ -41,18 +42,22 @@ class DemoRunner:
             generate_demo_service_php_client(
                 self.where,
                 flavour=self.flavour,
+                on_error=self.errors,
             )
             run_php_demo(
                 demo_script,
                 root=self.where,
                 demo_service_port=self.demo_service_port,
+                on_error=self.errors,
             )
         elif self.lang == 'python':
+            assert self.errors == 'return'
             generate_demo_service_python_client(self.where, flavour=self.flavour)
             run_python_demo(demo_script, root=self.where, demo_service_port=self.demo_service_port)
             # we also want to run mypy over the project
             run_python_typecheck(self.where)
         elif self.lang == 'typescript':
+            assert self.errors == 'return'
             generate_demo_service_typescript_client(self.where, flavour=self.flavour)
             run_typescript_demo(
                 demo_script,
@@ -69,24 +74,26 @@ def lang_flavour(request: Any) -> Iterable[Tuple[str, str]]:
 
 
 @pytest.fixture(params=[
-    'python/abstract',
-    'python/requests',
-    'php/abstract',
+    'python/abstract/return',
+    'python/requests/return',
+    'php/abstract/return',
+    'php/abstract/raise',
     # TODO: generate and add unit tests for a php/curl client
     # 'php/curl',
-    'typescript/abstract',
-    'typescript/fetch',
+    'typescript/abstract/return',
+    'typescript/fetch/return',
 ])
 def demo_runner(
     request: Any,
     tmppath: Path,  # pylint: disable=redefined-outer-name
     demo_service_port: int,  # pylint: disable=redefined-outer-name
 ) -> Iterable[DemoRunner]:
-    lang, flavour = request.param.split('/')
+    lang, flavour, errors = request.param.split('/')
 
     yield DemoRunner(
         cast(Any, lang),
         cast(Any, flavour),
+        cast(Any, errors),
         where=tmppath,
         demo_service_port=demo_service_port,
     )

@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 from subprocess import run
 from textwrap import dedent
-from typing import List, Union
+from typing import List, Literal, Union
 
 from paradox.output import Script
 
@@ -16,6 +16,7 @@ def generate_demo_service_php_client(
     root: Path,
     *,
     flavour: str,
+    on_error: Literal['return', 'raise'],
 ) -> None:
     """
     Generates a generated_client.php module and a get_client.php
@@ -28,6 +29,7 @@ def generate_demo_service_php_client(
             generated_client_path,
             'ClientBase',
             flavour='abstract',
+            on_error=on_error,
         )
         # install our get_client.php helper module
         shutil.copy(
@@ -41,10 +43,16 @@ def generate_demo_service_php_client(
             require 'demo_curl_client.php';
 
             function get_client() {
+                $on_error = getenv('ON_ERROR');
+                if ($on_error !== 'return' && $on_error !== 'raise') {
+                    throw new Exception('env $ON_ERROR was ' . var_export($on_error, true));
+                }
+
                 return new DemoCurlClient(
                     '127.0.0.1',
                     intval(getenv('DEMO_SERVICE_PORT')),
-                    dirname(__FILE__) . '/cookies.txt'
+                    dirname(__FILE__) . '/cookies.txt',
+                    $on_error
                 );
             }
             '''
@@ -60,6 +68,7 @@ def run_php_demo(
     *,
     root: Path,
     demo_service_port: int,
+    on_error: Literal['return', 'raise'],
 ) -> None:
     demo_php = root / 'demo.php'
     if isinstance(script, Script):
@@ -74,6 +83,7 @@ def run_php_demo(
         env=dict(
             **os.environ,
             DEMO_SERVICE_PORT=str(demo_service_port),
+            ON_ERROR=on_error,
         ),
     )
 
