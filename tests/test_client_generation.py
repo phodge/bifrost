@@ -176,6 +176,15 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     if demo_runner.lang not in ('python', 'php'):
         raise Exception(f"Unexpected lang {demo_runner.lang!r}")
 
+    if demo_runner.lang == 'php':
+        demo_runner.where = Path(f'/tmp/phpdemo.{demo_runner.flavour}.{demo_runner.errors}.22')
+        demo_runner.where.mkdir(exist_ok=True)
+        (demo_runner.where / 'cookies.txt').unlink()
+
+    if demo_runner.lang == 'python':
+        demo_runner.where = Path(f'/tmp/pydemo.{demo_runner.flavour}.{demo_runner.errors}.01')
+        demo_runner.where.mkdir(exist_ok=True)
+
     s = Script()
 
     s.also(HardCodedStatement(
