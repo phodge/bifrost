@@ -3,6 +3,7 @@
 class DemoCurlClient extends ClientBase {
     private $host;
     private $port;
+    private $cookiejar;
 
     public function __construct($host, $port, $cookiejar) {
         $this->host = $host;
