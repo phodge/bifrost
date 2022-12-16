@@ -29,17 +29,25 @@ def generateClient(
     funcspecs: List[Tuple[str, FuncSpec]],
     adv: Advanced,
     flavour: Literal['abstract'],
+    on_error: Literal['return', 'raise'],
 ) -> None:
     dest.add_file_comment(HEADER)
 
-    appendFailureModeClasses(dest)
+    appendFailureModeClasses(dest, as_exception=on_error == 'raise')
 
     # make copies of all our dataclasses
     for dc in adv.getAllDataclasses():
         dest.also(getDataclassSpec(dc, adv=adv, lang='php', hoistcontext=dest))
 
     # generate function wrappers
-    _generateWrappers(classname, funcspecs, adv=adv, flavour=flavour, context=dest)
+    _generateWrappers(
+        classname,
+        funcspecs,
+        adv=adv,
+        flavour=flavour,
+        context=dest,
+        on_error=on_error,
+    )
 
 
 def _generateWrappers(
@@ -49,6 +57,7 @@ def _generateWrappers(
     adv: Advanced,
     flavour: Literal['abstract'],
     context: AcceptsStatements,
+    on_error: Literal['return', 'raise'],
 ) -> None:
     next_conv_nr = 1
     cls = context.also(ClassSpec(
@@ -59,7 +68,7 @@ def _generateWrappers(
     # add an dispatch() function that is used for all methods
     dispatchfn = cls.createMethod(
         '_dispatch',
-        unionof(T_ApiFailure, CrossAny()),
+        unionof(T_ApiFailure, CrossAny()) if on_error == 'return' else CrossAny(),
         isabstract=flavour == 'abstract',
         # TODO: would be good if we could make this a protected method
     )
@@ -110,7 +119,9 @@ def _generateWrappers(
                 ))
                 conv.alsoReturn(v_converted)
 
-        rettype = unionof(T_ApiFailure, _generateCrossType(retspec, adv))
+        rettype = _generateCrossType(retspec, adv)
+        if on_error == 'return':
+            rettype = unionof(T_ApiFailure, rettype)
         method = cls.createMethod(name, rettype)
 
         for argname, spec in funcspec.getArgSpecs().items():

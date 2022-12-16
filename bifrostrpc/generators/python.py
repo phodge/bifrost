@@ -38,7 +38,7 @@ def generateClient(
     for name, base in adv.getNewTypesAndBases():
         dest.add_new_type(name, base)
 
-    appendFailureModeClasses(dest)
+    appendFailureModeClasses(dest, as_exception=False)
 
     # make copies of all our dataclasses
     for dc in adv.getAllDataclasses():
