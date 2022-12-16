@@ -55,9 +55,11 @@ class DemoCurlClient extends ClientBase {
             # TODO: test this code path when we rework errors
             $e = new ApiBroken("Unexpected HTTP {$info['http_code']} response from rpc server: {$result}");
             if ($this->on_error === 'raise') {
+                throw new \Exception(':TODO: test this code path III');
                 throw $e;
             }
 
+            throw new \Exception(':TODO: test this code path IV');
             return $e;
         }
 
