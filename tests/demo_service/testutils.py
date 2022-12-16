@@ -24,7 +24,11 @@ def generate_demo_service_php_client(
     get_client_path = root / 'get_client.php'
 
     if flavour == 'abstract':
-        service.generatePHPClient(generated_client_path, 'ClientBase', flavour='abstract')
+        service.generatePHPClient(
+            generated_client_path,
+            'ClientBase',
+            flavour='abstract',
+        )
         # install our get_client.php helper module
         shutil.copy(
                 DEMO_SERVICE_ROOT / 'client_templates' / 'demo_curl_client.php',
