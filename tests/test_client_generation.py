@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Union
 
 from paradox.expressions import (PanAwait, PanCall, PanDict, PanExpr, PanProp,
-                                 pan)
+                                 PanVar, pan)
 from paradox.generate.statements import FunctionSpec, HardCodedStatement
 from paradox.interfaces import AcceptsStatements
 from paradox.output import Script
@@ -13,6 +13,38 @@ from tests.scenarios import (assert_contains_text, assert_eq,
                              assert_isinstance, assert_islist)
 
 DEMO_SERVICE_ROOT = Path(__file__).parent / 'demo_service'
+
+
+def _assert_exception_message(
+    demo_runner: DemoRunner,
+    s: AcceptsStatements,
+    v_caught: PanVar,
+    expectedmsg: str,
+) -> None:
+    msgexpr: PanExpr
+    if demo_runner.lang in 'php':
+        msgexpr = v_caught.getprop('message')
+    elif demo_runner.lang == 'python':
+        msgexpr = v_caught.getprop('message')
+    elif demo_runner.lang == 'typescript':
+        # not currently used
+        raise Exception("TODO: implement this")
+        msgexpr = v_caught.getprop('message')
+    else:
+        raise Exception(f"Not implemented for {demo_runner.lang}")
+    assert_contains_text(s, msgexpr, expectedmsg)
+
+
+def _expect_error(
+    demo_runner: DemoRunner,
+    s: AcceptsStatements,
+    expr: PanExpr,
+    errclass: str,
+    expectedmsg: str,
+) -> None:
+        v_result = s.alsoDeclare('result', 'no_type', expr)
+        assert_isinstance(s, v_result, errclass)
+        _assert_exception_message(demo_runner, s, v_result, expectedmsg)
 
 
 def test_generated_client(
@@ -136,9 +168,13 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     s.blank()
     s.remark('should return an ApiUnauthorized first')
     s.alsoImportPy('generated_client', ['ApiUnauthorized'])
-    v_result = s.alsoDeclare('result', 'no_type', PanCall(v_client.getprop('whoami')))
-    assert_isinstance(s, v_result, 'ApiUnauthorized')
-    assert_contains_text(s, v_result.getprop('message'), 'Not logged in')
+    _expect_error(
+        demo_runner,
+        s,
+        PanCall(v_client.getprop('whoami')),
+        'ApiUnauthorized',
+        'Not logged in',
+    )
 
     s.blank()
     s.remark('try an invalid username/password')
@@ -157,9 +193,13 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
 
     s.blank()
     s.remark('confirm still not logged in')
-    s.alsoAssign(v_result, PanCall(v_client.getprop('whoami')))
-    assert_isinstance(s, v_result, 'ApiUnauthorized')
-    assert_contains_text(s, v_result.getprop('message'), 'Not logged in')
+    _expect_error(
+        demo_runner,
+        s,
+        PanCall(v_client.getprop('whoami')),
+        'ApiUnauthorized',
+        'Not logged in',
+    )
 
     s.remark('now log in with correct credentials')
     assert_eq(
