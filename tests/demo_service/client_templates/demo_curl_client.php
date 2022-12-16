@@ -4,11 +4,13 @@ class DemoCurlClient extends ClientBase {
     private $host;
     private $port;
     private $cookiejar;
+    private $on_error;
 
-    public function __construct($host, $port, $cookiejar) {
+    public function __construct($host, $port, $cookiejar, $on_error) {
         $this->host = $host;
         $this->port = $port;
         $this->cookiejar = $cookiejar;
+        $this->on_error = $on_error;
     }
 
     public function _dispatch(
@@ -42,19 +44,27 @@ class DemoCurlClient extends ClientBase {
 
         if ($info['http_code'] === 401) {
             $e = new ApiUnauthorized("HTTP 401 Unauthorized: $result");
+            if ($this->on_error === 'raise') {
+                throw $e;
+            }
+
             return $e;
         }
 
         if ($info['http_code'] !== 200) {
             # TODO: test this code path when we rework errors
             $e = new ApiBroken("Unexpected HTTP {$info['http_code']} response from rpc server: {$result}");
+            if ($this->on_error === 'raise') {
+                throw $e;
+            }
+
             return $e;
         }
 
-        // TODO: should return ApiBroken() when we don't get valid JSON back
+        // TODO: should return or raise ApiBroken() when we don't get valid JSON back
         $data = json_decode($result, true);
 
-        // TODO: should return ApiBroken() when the converter fails
+        // TODO: should return or raise ApiBroken() when the converter fails
         $ret = $this->{$converter_name}($data);
         return $ret;
     }
