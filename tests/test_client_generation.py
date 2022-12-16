@@ -137,10 +137,6 @@ def test_generated_client_session_auth(demo_runner: DemoRunner) -> None:
     s.remark('should return an ApiUnauthorized first')
     s.alsoImportPy('generated_client', ['ApiUnauthorized'])
     v_result = s.alsoDeclare('result', 'no_type', PanCall(v_client.getprop('whoami')))
-    s.also(HardCodedStatement(
-        php='var_export($result);',
-        python=None,
-    ))
     assert_isinstance(s, v_result, 'ApiUnauthorized')
     assert_contains_text(s, v_result.getprop('message'), 'Not logged in')
 
